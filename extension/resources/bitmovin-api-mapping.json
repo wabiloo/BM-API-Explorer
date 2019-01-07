@@ -30,6 +30,13 @@
           "classname": "error"
         },
         {
+          "description": "Highlight of error",
+          "type": "highlight",
+          "jsonpath": "$..*[?(@.status=='ERROR')].status",
+          "classname": "error"
+        },
+
+        {
           "description": "Link to input objects",
           "type": "href",
           "jsonpath": "$..inputId",
@@ -75,7 +82,7 @@
         {
           "description": "Encoding object",
           "type": "related",
-          "title": "Object",
+          "title": "{encoding_id}",
           "jsonpath": "$",
           "url": "/encoding/encodings/{encoding_id}",
           "group": "encoding"
@@ -147,31 +154,9 @@
 
     {
       "description": "Any page related to streams",
-      "title": "THIS is a page about STREAMS",
+      "title": "List of Streams",
       "url": "/encoding/encodings/{uuid}/streams",
-      "variables": [
-        {
-          "name": "stream_id",
-          "type": "url",
-          "regex": "streams/({uuid})"
-        }
-      ],
       "mappings": [
-        {
-          "description": "Link to codec configuration objects",
-          "type": "href",
-          "jsonpath": "$..codecConfigId",
-          "variables": [
-            {
-              "name": "type",
-              "type": "xhr",
-              "url": "/encoding/configurations/{value}/type",
-              "jsonpath": "$.data.result.type",
-              "transformation": "codecType"
-            }
-          ],
-          "url": "/encoding/configurations/{type}/{value}"
-        },
         {
           "description": "Link to individual stream object",
           "type": "href",
@@ -216,21 +201,82 @@
       ]
     },
     {
-      "description": "Pages related to a specific stream",
-      "url": "/encoding/encodings/{uuid}/streams/",
+      "description": "Any page related to a specific stream",
+      "title": "Details of Stream: {stream_id}",
+      "url": "/encoding/encodings/{uuid}/streams/{uuid}",
+      "variables": [
+        {
+          "name": "stream_id",
+          "type": "url",
+          "regex": "streams/({uuid})"
+        }
+      ],
       "mappings": [
+        {
+          "description": "Link to codec configuration objects",
+          "type": "href",
+          "jsonpath": "$..codecConfigId",
+          "variables": [
+            {
+              "name": "type",
+              "type": "xhr",
+              "url": "/encoding/configurations/{value}/type",
+              "jsonpath": "$.data.result.type",
+              "transformation": "codecType"
+            }
+          ],
+          "url": "/encoding/configurations/{type}/{value}"
+        },
         {
           "description": "Button for Stream object",
           "type": "related",
-          "title": "Object",
+          "title": "{stream_id}",
           "jsonpath": "$",
           "url": "/encoding/encodings/{encoding_id}/streams/{stream_id}",
           "group": "stream"
+        },
+        {
+          "description": "Button for Stream input details",
+          "type": "related",
+          "title": "Input Details",
+          "jsonpath": "$",
+          "url": "/encoding/encodings/{encoding_id}/streams/{stream_id}/input",
+          "group": "stream"
+        },
+        {
+          "description": "Button for Stream filters",
+          "type": "related",
+          "title": "Filters",
+          "jsonpath": "$",
+          "url": "/encoding/encodings/{encoding_id}/streams/{stream_id}/filters",
+          "group": "stream",
+          "precount": "$.data.result.filters"
+        },
+        {
+          "description": "Button for Stream Thumbnails",
+          "type": "related",
+          "title": "Thumbnails",
+          "jsonpath": "$",
+          "url": "/encoding/encodings/{encoding_id}/streams/{stream_id}/thumbnails",
+          "group": "stream",
+          "precount": "$.data.result.totalCount"
+        },
+        {
+          "description": "Button for Stream Sprites",
+          "type": "related",
+          "title": "Sprites",
+          "jsonpath": "$",
+          "url": "/encoding/encodings/{encoding_id}/streams/{stream_id}/sprites",
+          "group": "stream",
+          "precount": "$.data.result.totalCount"
         }
+
       ]
     },
+
     {
       "description": "Pages related to stream filters",
+      "title": "List of Stream Filters",
       "url": "/encoding/encodings/{uuid}/streams/{uuid}/filters",
       "mappings": [
         {
@@ -253,7 +299,7 @@
 
     {
       "description": "Page for list of encoding muxings",
-      "title": "THIS is a page about MUXINGS",
+      "title": "List of Muxings",
       "url": "/encoding/encodings/{uuid}/muxings(?!\/)",
       "mappings": [
         {
@@ -418,17 +464,18 @@
     },
     {
       "description": "Pages related to a specific muxing",
-      "url": "/encoding/encodings/{uuid}/muxings/\\w+/{uuid}",
+      "title": "Details for Muxing ({muxing_type}): {muxing_id}",
+      "url": "/encoding/encodings/{uuid}/muxings/[\\w-]+/{uuid}",
       "variables": [
         {
           "name": "muxing_type",
           "type": "url",
-          "regex": "muxings/(\\w+)/{uuid}"
+          "regex": "muxings/([\\w-]+)/{uuid}"
         },
         {
           "name": "muxing_id",
           "type": "url",
-          "regex": "muxings/\\w+/({uuid})"
+          "regex": "muxings/[\\w-]+/({uuid})"
         }
       ],
       "mappings": [
@@ -441,7 +488,7 @@
         {
           "description": "Button for Muxing object",
           "type": "related",
-          "title": "Object",
+          "title": "{muxing_id}",
           "jsonpath": "$",
           "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}",
           "group": "muxing"
@@ -641,7 +688,7 @@
         {
           "description": "Encoding object",
           "type": "related",
-          "title": "Object",
+          "title": "{encoding_id}",
           "jsonpath": "$",
           "url": "/encoding/encodings/{encoding_id}",
           "group": "encoding"
@@ -746,6 +793,41 @@
           "jsonpath": "$",
           "url": "/encoding/manifests/dash/{manifest_id}/periods/{period_id}",
           "group": "dash"
+        }
+      ]
+    },
+
+    {
+      "description": "Pages related to a specific input",
+      "title": "Details for Input ({input_type}): {input_id}",
+      "url": "/encoding/inputs/[\\w-]+/{uuid}",
+      "variables": [
+        {
+          "name": "input_type",
+          "type": "url",
+          "regex": "inputs/([\\w-]+)/{uuid}"
+        },
+        {
+          "name": "input_id",
+          "type": "url",
+          "regex": "inputs/[\\w-]+/({uuid})"
+        }
+      ]
+    },
+    {
+      "description": "Pages related to a specific output",
+      "title": "Details for Output ({output_type}): {output_id}",
+      "url": "/encoding/outputs/[\\w-]+/{uuid}",
+      "variables": [
+        {
+          "name": "output_type",
+          "type": "url",
+          "regex": "outputs/([\\w-]+)/{uuid}"
+        },
+        {
+          "name": "output_id",
+          "type": "url",
+          "regex": "outputs/[\\w-]+/({uuid})"
         }
       ]
     },

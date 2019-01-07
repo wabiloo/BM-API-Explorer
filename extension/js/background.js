@@ -668,18 +668,19 @@
                         console.log(`Processing definition for page: ${pagedef.url}`);
                         var context = { pageUrl: thisurl };
 
-                        // we extract the page title
-                        if (pagedef.hasOwnProperty('title')) {
-                            var pagetitle = nodeDecorations['$'] || getBitmovinDecoration();
-                            pagetitle = addBitmovinDecoration(pagetitle, 'pagetitle', pagedef.title)
-                            nodeDecorations['$'] = pagetitle;
-                        }
-
                         // we extract page variables
                         var thisPageExtracts = {};
                         if (pagedef.hasOwnProperty('variables')) {
                             thisPageExtracts = await extractVariables(context, pagedef.variables, json);
                             pageExtracts = Object.assign(thisPageExtracts, pageExtracts)
+                        }
+
+                        // we process the page title
+                        if (pagedef.hasOwnProperty('title')) {
+                            var pagetitle = nodeDecorations['$'] || getBitmovinDecoration();
+                            var title = resolvePlaceholders(pagedef.title, pageExtracts);
+                            pagetitle = addBitmovinDecoration(pagetitle, 'pagetitle', title);
+                            nodeDecorations['$'] = pagetitle;
                         }
 
                         // from this, there are 1 or more re-mappings to perform
@@ -709,6 +710,9 @@
                                     }
 
                                     // ... and add the relevant decorations
+                                    if (mapdef.title) {
+                                        mapdef.title = resolvePlaceholders(mapdef.title, extracts)
+                                    }
                                     var linkurl;
                                     if (mapdef.url) {
                                         // replace all placeholders by the extracted value
@@ -766,7 +770,6 @@
                     console.log("Order of application:", paths);
 
                     paths.forEach(function(p) {
-                        console.log("changing path:", p );
                         // special treatment for root, due to bug in jsonpath and not wanting to modify the root object
                         if (p === '$') {
                             json['__bmPageDecorations'] = nodeDecorations[p]
@@ -948,7 +951,8 @@
     function reformatValues(value, method) {
         switch (method) {
             case "lowerCase":
-                return value.toLowerCase();
+                value = value.toLowerCase();
+                return value.replace(/_/g,'-');
                 break;
 
             case "codecType":

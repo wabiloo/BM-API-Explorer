@@ -308,6 +308,12 @@ a:hover, a:active {
   .headerLinks {
     margin-top: 10px;
     margin-bottom: 10px;
+
+    .group {
+      display: block;
+      border: none;
+      margin: 5px 0 0 12px;
+    }
   }
   h1 {
     font-size: large;
