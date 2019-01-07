@@ -1,6 +1,6 @@
 ![JSONViewer Logo](https://github.com/wabiloo/BM-API-Explorer/raw/master/extension/icons/128.png)
 
-DJSON Viewer and Formatter
+Bitmovin API Explorer
 ==============
 
 Chrome extension for exploring and navigating Bitmovin APIs in a browser tab.
