@@ -1,9 +1,9 @@
 {
-  "name": "Bitmovin API Explorer. Viewer, Formatter and Navigator for Bitmovin API JSON responses",
+  "name": "Bitmovin API Explorer.",
   "short_name": "BM-API-Explorer",
   "version": "0.1",
   "manifest_version": 2,
-  "description": "Extension to explore and navigate Bitmovin API reponses",
+  "description": "View, explore and navigate Bitmovin API reponses.",
   "homepage_url": "https://github.com/wabiloo/BM-API-Explorer",
   "minimum_chrome_version": "35",
   "offline_enabled": true,
