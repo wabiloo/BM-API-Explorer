@@ -533,6 +533,20 @@
                 var button = document.createElement('A');
                 button.href = rel['href'];
                 button.innerText = rel["title"];
+                if (rel.hasOwnProperty('suffix')) {
+                    button.innerText += ": ";
+                    var val = getSpanClass('suffix');
+                    val.innerText = rel.suffix;
+                    button.appendChild(val);
+
+                    if (rel.suffix === 'error') {
+                        button.classList.add("error");
+                    } else if (!rel.suffix || ['0', 'undefined', 'null'].includes(rel.suffix)) {
+                        button.classList.add("null");
+                    }
+
+                }
+                // add classes to reflect
                 if (rel.hasOwnProperty('classname')) {
                     button.classList.add(rel.classname)
                 }
@@ -697,10 +711,31 @@
 
                                     // we add contextual info to the node
                                     node = Object.assign(node, context);
+
                                     // We extract (and possibly overwrite) all additional relevant variables
                                     var extracts = await extractVariables(node, mapdef.variables, json);
                                     extracts = Object.assign(extracts, pageExtracts);
 
+                                    var targetUrl;
+                                    if (mapdef['target'] && mapdef['target']['url']) {
+                                        // replace all placeholders by the extracted value
+                                        var resolvedUrl = resolvePlaceholders(mapdef['target']['url'], extracts);
+                                        targetUrl = createBitmovinApiURL(thisurl, resolvedUrl, false);
+
+                                        // some variables may have to be extracted from the target URL
+                                        var xhrResponse = {};
+                                        if (makeXhrCalls && mapdef['target']['variables']) {
+                                            try {
+                                                // Pre-request the URL
+                                                xhrResponse = await requestBitmovinApiURL(targetUrl);
+                                                var targetExtracts = await extractVariables(node, mapdef['target']['variables'], xhrResponse);
+                                                extracts = Object.assign(extracts, targetExtracts)
+                                            } catch (e) {
+                                            }
+                                        }
+                                    }
+
+                                    // Generate the decoration
                                     // we find or generate a decoration template
                                     var deco;
                                     if (nodeDecorations.hasOwnProperty(nodePath)) {
@@ -710,40 +745,32 @@
                                     }
 
                                     // ... and add the relevant decorations
+                                    var resolved = {};
                                     if (mapdef.title) {
-                                        mapdef.title = resolvePlaceholders(mapdef.title, extracts)
+                                        resolved['title'] = resolvePlaceholders(mapdef.title, extracts)
                                     }
-                                    var linkurl;
-                                    if (mapdef.url) {
-                                        // replace all placeholders by the extracted value
-                                        var resolvedurl = resolvePlaceholders(mapdef.url, extracts);
-                                        linkurl = createBitmovinApiURL(thisurl, resolvedurl, false);
+                                    if (mapdef.group) {
+                                        resolved['group'] = mapdef.group
                                     }
-                                    // Generate the decoration
+
+                                    // add other decorations based on the type defined
                                     switch (mapdef.type) {
                                         case "href":
-                                            deco = addBitmovinDecoration(deco, "href", linkurl);
+                                            deco = addBitmovinDecoration(deco, "href", targetUrl);
                                             break;
 
                                         case "related":
-                                            mapdef['hrefurl'] = linkurl;
+                                            resolved['href'] = targetUrl;
 
-                                            if (makeXhrCalls && mapdef.precount) {
-                                                try {
-                                                    // Pre-request the URL to get the count
-                                                    var response = await requestBitmovinApiURL(linkurl);
-                                                    var count = jsonpath.value(response, mapdef.precount);
-                                                    if (count instanceof Array) {
-                                                        count = count.length
-                                                    }
-                                                    mapdef.itemcount = count;
-                                                } catch (e) {
-                                                    mapdef.itemcount = 'error';
+                                            var resolvedSuffix;
+                                            if (mapdef['presentation']) {
+                                                if (mapdef['presentation']['suffix']) {
+                                                    resolved['suffix'] = resolvePlaceholders(mapdef['presentation']['suffix'], extracts)
                                                 }
                                             }
 
                                             // Generate a decoration
-                                            deco = addBitmovinDecoration(deco, "related", mapdef);
+                                            deco = addBitmovinDecoration(deco, "related", resolved);
                                             break;
 
                                         case "highlight":
@@ -830,6 +857,11 @@
                         siblingpath = jsonpath.stringify(siblingpath);
                         value = jsonpath.value(fulljson, siblingpath);
                         break;
+
+                    case "jsonpath":
+                        // extract a value from the payload
+                        value = jsonpath.value(fulljson, vardef.jsonpath);
+                        break;
                 }
 
                 // reformat the response accordingly
@@ -862,21 +894,7 @@
                 break;
 
             case "related":
-                var rel = {
-                    "title": info.title,
-                    "href": info.hrefurl,
-                    "group": info.group
-                };
-                if (info.hasOwnProperty('itemcount')) {
-                    rel.title = rel.title + ": " + info.itemcount;
-                    if (!info.itemcount) {
-                        rel.classname = "zerocount";
-                    }
-                    if (info.itemcount === 'error') {
-                        rel.classname = "error";
-                    }
-                }
-                deco['related'].push(rel);
+                deco['related'].push(info);
                 break;
 
             case "cssclass":
@@ -965,6 +983,18 @@
                 if (video.includes(t)) {
                     return "video/" + t
                 }
+                break;
+
+            case "count":
+                if (typeof value === 'number') {
+                    return value
+                } else {
+                    try {
+                        value = value.length
+                    } catch (e) {}
+                    return value
+                }
+                break;
         }
     }
 

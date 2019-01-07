@@ -288,8 +288,12 @@ a:hover, a:active {
     background: $color-extlink-back;
     border-radius: 3px;
     color: $color-text;
+
+    .suffix {
+      font-weight: bold;
+    }
   }
-  a.zerocount {
+  a.null {
     background: $color-extlink-zero;
   }
   a.error {

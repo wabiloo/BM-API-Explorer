@@ -88,66 +88,181 @@
           "group": "encoding"
         },
         {
+          "description": "Encoding live details",
+          "type": "related",
+          "title": "Live",
+          "group": "encoding",
+          "jsonpath": "$",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/live",
+            "variables": [
+              {
+                "name": "application",
+                "type": "jsonpath",
+                "jsonpath": "$.data.result.application"
+              }
+            ]
+          },
+          "presentation": {
+            "suffix": "{application}",
+            "showif": "{application}"
+          }
+        },
+        {
+          "description": "Encoding start request",
+          "type": "related",
+          "title": "Start Details",
+          "jsonpath": "$",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/start"
+          },
+          "group": "encoding"
+        },
+        {
           "description": "Encoding status",
           "type": "related",
           "title": "Status",
+          "group": "encoding",
           "jsonpath": "$",
-          "url": "/encoding/encodings/{encoding_id}/status",
-          "group": "encoding"
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/status",
+            "variables": [
+              {
+                "name": "status",
+                "type": "jsonpath",
+                "jsonpath": "$.data.result.status"
+              }
+            ]
+          },
+          "presentation": {
+            "suffix": "{status}"
+          }
         },
         {
           "description": "Encoding streams",
           "type": "related",
           "title": "Streams",
-          "jsonpath": "$",
-          "url": "/encoding/encodings/{encoding_id}/streams",
           "group": "encoding",
-          "precount": "$.data.result.totalCount"
+          "jsonpath": "$",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/streams",
+            "variables": [
+              {
+                "name": "count",
+                "type": "jsonpath",
+                "jsonpath": "$.data.result.totalCount",
+                "transformation": "count"
+              }
+            ]
+          },
+          "presentation": {
+            "suffix": "{count}"
+          }
         },
         {
           "description": "Encoding muxings",
           "type": "related",
           "title": "Muxings",
-          "jsonpath": "$",
-          "url": "/encoding/encodings/{encoding_id}/muxings",
           "group": "encoding",
-          "precount": "$.data.result.totalCount"
+          "jsonpath": "$",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/muxings",
+            "variables": [
+              {
+                "name": "count",
+                "type": "jsonpath",
+                "jsonpath": "$.data.result.totalCount",
+                "transformation": "count"
+              }
+            ]
+          },
+          "presentation": {
+            "suffix": "{count}"
+          }
         },
         {
           "description": "Encoding keyframes",
           "type": "related",
           "title": "Keyframes",
-          "jsonpath": "$",
-          "url": "/encoding/encodings/{encoding_id}/keyframes",
           "group": "encoding",
-          "precount": "$.data.result.totalCount"
+          "jsonpath": "$",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/keyframes",
+            "variables": [
+              {
+                "name": "count",
+                "type": "jsonpath",
+                "jsonpath": "$.data.result.totalCount",
+                "transformation": "count"
+              }
+            ]
+          },
+          "presentation": {
+            "suffix": "{count}"
+          }
         },
         {
           "description": "DASH manifests",
           "type": "related",
           "title": "DASH",
-          "jsonpath": "$",
-          "url": "/encoding/manifests/dash?encodingId={encoding_id}",
           "group": "manifests",
-          "precount": "$.data.result.totalCount"
+          "jsonpath": "$",
+          "target": {
+            "url": "/encoding/manifests/dash?encodingId={encoding_id}",
+            "variables": [
+              {
+                "name": "count",
+                "type": "jsonpath",
+                "jsonpath": "$.data.result.totalCount",
+                "transformation": "count"
+              }
+            ]
+          },
+          "presentation": {
+            "suffix": "{count}"
+          }
         },
         {
           "description": "HLS manifests",
           "type": "related",
           "title": "HLS",
-          "jsonpath": "$",
-          "url": "/encoding/manifests/hls?encodingId={encoding_id}",
           "group": "manifests",
-          "precount": "$.data.result.totalCount"
+          "jsonpath": "$",
+          "target": {
+            "url": "/encoding/manifests/hls?encodingId={encoding_id}",
+            "variables": [
+              {
+                "name": "count",
+                "type": "jsonpath",
+                "jsonpath": "$.data.result.totalCount",
+                "transformation": "count"
+              }
+            ]
+          },
+          "presentation": {
+            "suffix": "{count}"
+          }
         },
         {
           "description": "Smooth manifests",
           "type": "related",
           "title": "Smooth",
-          "jsonpath": "$",
-          "url": "/encoding/manifests/smooth?encodingId={encoding_id}",
           "group": "manifests",
-          "precount": "$.data.result.totalCount"
+          "jsonpath": "$",
+          "target": {
+            "url": "/encoding/manifests/smooth?encodingId={encoding_id}",
+            "variables": [
+              {
+                "name": "count",
+                "type": "jsonpath",
+                "jsonpath": "$.data.result.totalCount",
+                "transformation": "count"
+              }
+            ]
+          },
+          "presentation": {
+            "suffix": "{count}"
+          }
         }
       ]
     },
@@ -161,42 +276,82 @@
           "description": "Link to individual stream object",
           "type": "href",
           "jsonpath": "$..*[?(@.createdAt)].id",
-          "url": "/encoding/encodings/{encoding_id}/streams/{value}"
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/streams/{value}"
+          }
         },
         {
           "description": "Button for Stream input details",
           "type": "related",
           "title": "Input Details",
+          "group": "stream",
           "jsonpath": "$..*[?(@.createdAt)].id",
-          "url": "/encoding/encodings/{encoding_id}/streams/{value}/input",
-          "group": "stream"
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/streams/{value}/input"
+          }
         },
         {
           "description": "Button for Stream filters",
           "type": "related",
           "title": "Filters",
-          "jsonpath": "$..*[?(@.createdAt)].id",
-          "url": "/encoding/encodings/{encoding_id}/streams/{value}/filters",
           "group": "stream",
-          "precount": "$.data.result.filters"
+          "jsonpath": "$..*[?(@.createdAt)].id",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/streams/{value}/filters",
+            "variables": [
+              {
+                "name": "count",
+                "type": "jsonpath",
+                "jsonpath": "$.data.result.filters",
+                "transformation": "count"
+              }
+            ]
+          },
+          "presentation": {
+            "suffix": "{count}"
+          }
         },
         {
           "description": "Button for Stream Thumbnails",
           "type": "related",
           "title": "Thumbnails",
-          "jsonpath": "$..*[?(@.createdAt)].id",
-          "url": "/encoding/encodings/{encoding_id}/streams/{value}/thumbnails",
           "group": "stream",
-          "precount": "$.data.result.totalCount"
+          "jsonpath": "$..*[?(@.createdAt)].id",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/streams/{value}/thumbnails",
+            "variables": [
+              {
+                "name": "count",
+                "type": "jsonpath",
+                "jsonpath": "$.data.result.totalCount",
+                "transformation": "count"
+              }
+            ]
+          },
+          "presentation": {
+            "suffix": "{count}"
+          }
         },
         {
           "description": "Button for Stream Sprites",
           "type": "related",
           "title": "Sprites",
-          "jsonpath": "$..*[?(@.createdAt)].id",
-          "url": "/encoding/encodings/{encoding_id}/streams/{value}/sprites",
           "group": "stream",
-          "precount": "$.data.result.totalCount"
+          "jsonpath": "$..*[?(@.createdAt)].id",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/streams/{value}/sprites",
+            "variables": [
+              {
+                "name": "count",
+                "type": "jsonpath",
+                "jsonpath": "$.data.result.totalCount",
+                "transformation": "count"
+              }
+            ]
+          },
+          "presentation": {
+            "suffix": "{count}"
+          }
         }
       ]
     },
@@ -225,14 +380,18 @@
               "transformation": "codecType"
             }
           ],
-          "url": "/encoding/configurations/{type}/{value}"
+          "target": {
+            "url": "/encoding/configurations/{type}/{value}"
+          }
         },
         {
           "description": "Button for Stream object",
           "type": "related",
           "title": "{stream_id}",
           "jsonpath": "$",
-          "url": "/encoding/encodings/{encoding_id}/streams/{stream_id}",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/streams/{stream_id}"
+          },
           "group": "stream"
         },
         {
@@ -240,7 +399,9 @@
           "type": "related",
           "title": "Input Details",
           "jsonpath": "$",
-          "url": "/encoding/encodings/{encoding_id}/streams/{stream_id}/input",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/streams/{stream_id}/input"
+          },
           "group": "stream"
         },
         {
@@ -248,27 +409,63 @@
           "type": "related",
           "title": "Filters",
           "jsonpath": "$",
-          "url": "/encoding/encodings/{encoding_id}/streams/{stream_id}/filters",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/streams/{stream_id}/filters",
+            "variables": [
+              {
+                "name": "count",
+                "type": "jsonpath",
+                "jsonpath": "$.data.result.filters",
+                "transformation": "count"
+              }
+            ]
+          },
           "group": "stream",
-          "precount": "$.data.result.filters"
+          "presentation": {
+            "suffix": "{count}"
+          }
         },
         {
           "description": "Button for Stream Thumbnails",
           "type": "related",
           "title": "Thumbnails",
           "jsonpath": "$",
-          "url": "/encoding/encodings/{encoding_id}/streams/{stream_id}/thumbnails",
-          "group": "stream",
-          "precount": "$.data.result.totalCount"
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/streams/{stream_id}/thumbnails",
+            "variables": [
+              {
+                "name": "count",
+                "type": "jsonpath",
+                "jsonpath": "$.data.result.totalCount",
+                "transformation": "count"
+              }
+            ]
+          },
+          "presentation": {
+            "suffix": "{count}"
+          },
+          "group": "stream"
         },
         {
           "description": "Button for Stream Sprites",
           "type": "related",
           "title": "Sprites",
           "jsonpath": "$",
-          "url": "/encoding/encodings/{encoding_id}/streams/{stream_id}/sprites",
-          "group": "stream",
-          "precount": "$.data.result.totalCount"
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/streams/{stream_id}/sprites",
+            "variables": [
+              {
+                "name": "count",
+                "type": "jsonpath",
+                "jsonpath": "$.data.result.totalCount",
+                "transformation": "count"
+              }
+            ]
+          },
+          "presentation": {
+            "suffix": "{count}"
+          },
+          "group": "stream"
         }
 
       ]
@@ -292,7 +489,9 @@
               "transformation": "lowerCase"
             }
           ],
-          "url": "/encoding/filters/{filter_type}/{value}"
+          "target": {
+            "url": "/encoding/filters/{filter_type}/{value}"
+          }
         }
       ]
     },
@@ -306,7 +505,9 @@
           "description": "Link to stream objects",
           "type": "href",
           "jsonpath": "$..streamId",
-          "url": "/encoding/encodings/{encoding_id}/streams/{value}"
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/streams/{value}"
+          }
         },
         {
           "description": "Link to individual muxing objects in list",
@@ -320,7 +521,9 @@
               "transformation": "lowerCase"
             }
           ],
-          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{value}"
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{value}"
+          }
         },
         {
           "description": "Button for Widevine DRM",
@@ -335,9 +538,21 @@
               "transformation": "lowerCase"
             }
           ],
-          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{value}/drm/widevine",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{value}/drm/widevine",
+            "variables": [
+              {
+                "name": "count",
+                "type": "jsonpath",
+                "jsonpath": "$.data.result.totalCount",
+                "transformation": "count"
+              }
+            ]
+          },
           "group": "drm",
-          "precount": "$.data.result.totalCount"
+          "presentation": {
+            "suffix": "{count}"
+          }
         },
         {
           "description": "Button for PlayReady DRM",
@@ -352,9 +567,21 @@
               "transformation": "lowerCase"
             }
           ],
-          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{value}/drm/playready",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{value}/drm/playready",
+            "variables": [
+              {
+                "name": "count",
+                "type": "jsonpath",
+                "jsonpath": "$.data.result.totalCount",
+                "transformation": "count"
+              }
+            ]
+          },
           "group": "drm",
-          "precount": "$.data.result.totalCount"
+          "presentation": {
+            "suffix": "{count}"
+          }
         },
         {
           "description": "Button for FairPlay DRM",
@@ -369,9 +596,21 @@
               "transformation": "lowerCase"
             }
           ],
-          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{value}/drm/fairplay",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{value}/drm/fairplay",
+            "variables": [
+              {
+                "name": "count",
+                "type": "jsonpath",
+                "jsonpath": "$.data.result.totalCount",
+                "transformation": "count"
+              }
+            ]
+          },
           "group": "drm",
-          "precount": "$.data.result.totalCount"
+          "presentation": {
+            "suffix": "{count}"
+          }
         },
         {
           "description": "Button for CENC DRM",
@@ -386,9 +625,21 @@
               "transformation": "lowerCase"
             }
           ],
-          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{value}/drm/cenc",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{value}/drm/cenc",
+            "variables": [
+              {
+                "name": "count",
+                "type": "jsonpath",
+                "jsonpath": "$.data.result.totalCount",
+                "transformation": "count"
+              }
+            ]
+          },
           "group": "drm",
-          "precount": "$.data.result.totalCount"
+          "presentation": {
+            "suffix": "{count}"
+          }
         },
         {
           "description": "Button for ClearKey DRM",
@@ -403,9 +654,21 @@
               "transformation": "lowerCase"
             }
           ],
-          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{value}/drm/clearkey",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{value}/drm/clearkey",
+            "variables": [
+              {
+                "name": "count",
+                "type": "jsonpath",
+                "jsonpath": "$.data.result.totalCount",
+                "transformation": "count"
+              }
+            ]
+          },
           "group": "drm",
-          "precount": "$.data.result.totalCount"
+          "presentation": {
+            "suffix": "{count}"
+          }
         },
         {
           "description": "Button for Marlin DRM",
@@ -420,9 +683,21 @@
               "transformation": "lowerCase"
             }
           ],
-          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{value}/drm/marlin",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{value}/drm/marlin",
+            "variables": [
+              {
+                "name": "count",
+                "type": "jsonpath",
+                "jsonpath": "$.data.result.totalCount",
+                "transformation": "count"
+              }
+            ]
+          },
           "group": "drm",
-          "precount": "$.data.result.totalCount"
+          "presentation": {
+            "suffix": "{count}"
+          }
         },
         {
           "description": "Button for Primetime DRM",
@@ -437,9 +712,21 @@
               "transformation": "lowerCase"
             }
           ],
-          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{value}/drm/primetime",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{value}/drm/primetime",
+            "variables": [
+              {
+                "name": "count",
+                "type": "jsonpath",
+                "jsonpath": "$.data.result.totalCount",
+                "transformation": "count"
+              }
+            ]
+          },
           "group": "drm",
-          "precount": "$.data.result.totalCount"
+          "presentation": {
+            "suffix": "{count}"
+          }
         },
         {
           "description": "Button for AES DRM",
@@ -454,9 +741,21 @@
               "transformation": "lowerCase"
             }
           ],
-          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{value}/drm/aes",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{value}/drm/aes",
+            "variables": [
+              {
+                "name": "count",
+                "type": "jsonpath",
+                "jsonpath": "$.data.result.totalCount",
+                "transformation": "count"
+              }
+            ]
+          },
           "group": "drm",
-          "precount": "$.data.result.totalCount"
+          "presentation": {
+            "suffix": "{count}"
+          }
         }
 
 
@@ -483,14 +782,18 @@
           "description": "Link to stream objects",
           "type": "href",
           "jsonpath": "$..streamId",
-          "url": "/encoding/encodings/{encoding_id}/streams/{value}"
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/streams/{value}"
+          }
         },
         {
           "description": "Button for Muxing object",
           "type": "related",
           "title": "{muxing_id}",
           "jsonpath": "$",
-          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}"
+          },
           "group": "muxing"
         }
       ]
@@ -504,7 +807,9 @@
           "type": "related",
           "title": "Widevine",
           "jsonpath": "$.data.result.id",
-          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/widevine",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/widevine"
+          },
           "group": "drm",
           "precount": "$.data.result.totalCount"
         },
@@ -513,7 +818,9 @@
           "type": "related",
           "title": "PlayReady",
           "jsonpath": "$.data.result.id",
-          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/playready",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/playready"
+          },
           "group": "drm",
           "precount": "$.data.result.totalCount"
         },
@@ -522,7 +829,9 @@
           "type": "related",
           "title": "FairPlay",
           "jsonpath": "$.data.result.id",
-          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/fairplay",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/fairplay"
+          },
           "group": "drm",
           "precount": "$.data.result.totalCount"
         },
@@ -531,7 +840,9 @@
           "type": "related",
           "title": "CENC",
           "jsonpath": "$.data.result.id",
-          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/cenc",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/cenc"
+          },
           "group": "drm",
           "precount": "$.data.result.totalCount"
         },
@@ -540,7 +851,9 @@
           "type": "related",
           "title": "ClearKey",
           "jsonpath": "$.data.result.id",
-          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/clearkey",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/clearkey"
+          },
           "group": "drm",
           "precount": "$.data.result.totalCount"
         },
@@ -549,7 +862,9 @@
           "type": "related",
           "title": "Marlin",
           "jsonpath": "$.data.result.id",
-          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/marlin",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/marlin"
+          },
           "group": "drm",
           "precount": "$.data.result.totalCount"
         },
@@ -558,7 +873,9 @@
           "type": "related",
           "title": "Primetime",
           "jsonpath": "$.data.result.id",
-          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/primetime",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/primetime"
+          },
           "group": "drm",
           "precount": "$.data.result.totalCount"
         },
@@ -567,7 +884,9 @@
           "type": "related",
           "title": "WebVTT",
           "jsonpath": "$.data.result.id",
-          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/captions/webvtt",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/captions/webvtt"
+          },
           "group": "captions",
           "precount": "$.data.result.totalCount"
         },
@@ -576,7 +895,9 @@
           "type": "related",
           "title": "TTML",
           "jsonpath": "$.data.result.id",
-          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/captions/ttml",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/captions/ttml"
+          },
           "group": "captions",
           "precount": "$.data.result.totalCount"
         }
@@ -593,7 +914,9 @@
           "type": "related",
           "title": "Widevine",
           "jsonpath": "$.data.result.id",
-          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/widevine",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/widevine"
+          },
           "group": "drm",
           "precount": "$.data.result.totalCount"
         },
@@ -602,7 +925,9 @@
           "type": "related",
           "title": "FairPlay",
           "jsonpath": "$.data.result.id",
-          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/fairplay",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/fairplay"
+          },
           "group": "drm",
           "precount": "$.data.result.totalCount"
         },
@@ -611,7 +936,9 @@
           "type": "related",
           "title": "CENC",
           "jsonpath": "$.data.result.id",
-          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/cenc",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/cenc"
+          },
           "group": "drm",
           "precount": "$.data.result.totalCount"
         },
@@ -620,7 +947,9 @@
           "type": "related",
           "title": "Marlin",
           "jsonpath": "$.data.result.id",
-          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/marlin",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/marlin"
+          },
           "group": "drm",
           "precount": "$.data.result.totalCount"
         },
@@ -629,7 +958,9 @@
           "type": "related",
           "title": "AES",
           "jsonpath": "$.data.result.id",
-          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/AES",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/AES"
+          },
           "group": "drm",
           "precount": "$.data.result.totalCount"
         },
@@ -638,7 +969,9 @@
           "type": "related",
           "title": "CEA 608/708",
           "jsonpath": "$.data.result.id",
-          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/captions/cea",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/captions/cea"
+          },
           "group": "captions",
           "precount": "$.data.result.totalCount"
         }
@@ -661,14 +994,18 @@
               "transformation": "lowerCase"
             }
           ],
-          "url": "/encoding/manifests/{manifest_type}/{value}"
+          "target": {
+            "url": "/encoding/manifests/{manifest_type}/{value}"
+          }
         },
         {
           "description": "DASH Periods",
           "type": "related",
           "title": "Periods",
           "jsonpath": "$.data..[?(@.type=='DASH')].id",
-          "url": "/encoding/manifests/dash/{value}/periods",
+          "target": {
+            "url": "/encoding/manifests/dash/{value}/periods"
+          },
           "group": "DASH",
           "precount": "$.data.result.totalCount"
         }
@@ -690,7 +1027,9 @@
           "type": "related",
           "title": "{encoding_id}",
           "jsonpath": "$",
-          "url": "/encoding/encodings/{encoding_id}",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}"
+          },
           "group": "encoding"
         },
         {
@@ -698,7 +1037,9 @@
           "type": "related",
           "title": "Status",
           "jsonpath": "$",
-          "url": "/encoding/encodings/{encoding_id}/status",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/status"
+          },
           "group": "encoding"
         }
       ]
@@ -720,7 +1061,9 @@
           "type": "related",
           "title": "Manifest",
           "jsonpath": "$",
-          "url": "/encoding/manifests/dash/{manifest_id}",
+          "target": {
+            "url": "/encoding/manifests/dash/{manifest_id}"
+          },
           "group": "dash"
         }
       ]
@@ -734,14 +1077,18 @@
           "type": "href",
           "title": "Periods",
           "jsonpath": "$.data..id",
-          "url": "/encoding/manifests/dash/{manifest_id}/periods/{value}"
+          "target": {
+            "url": "/encoding/manifests/dash/{manifest_id}/periods/{value}"
+          }
         },
         {
           "description": "DASH Audio Adaptation Set",
           "type": "related",
           "title": "Audio",
           "jsonpath": "$.data..id",
-          "url": "/encoding/manifests/dash/{manifest_id}/periods/{value}/adaptationsets/audio",
+          "target": {
+            "url": "/encoding/manifests/dash/{manifest_id}/periods/{value}/adaptationsets/audio"
+          },
           "group": "adaptationsets",
           "precount": "$.data.result.totalCount"
         },
@@ -750,7 +1097,9 @@
           "type": "related",
           "title": "Video",
           "jsonpath": "$.data..id",
-          "url": "/encoding/manifests/dash/{manifest_id}/periods/{value}/adaptationsets/video",
+          "target": {
+            "url": "/encoding/manifests/dash/{manifest_id}/periods/{value}/adaptationsets/video"
+          },
           "group": "adaptationsets",
           "precount": "$.data.result.totalCount"
         },
@@ -759,7 +1108,9 @@
           "type": "related",
           "title": "Subtitle",
           "jsonpath": "$.data..id",
-          "url": "/encoding/manifests/dash/{manifest_id}/periods/{value}/adaptationsets/subtitle",
+          "target": {
+            "url": "/encoding/manifests/dash/{manifest_id}/periods/{value}/adaptationsets/subtitle"
+          },
           "group": "adaptationsets",
           "precount": "$.data.result.totalCount"
         },
@@ -768,7 +1119,9 @@
           "type": "related",
           "title": "Custom",
           "jsonpath": "$.data..id",
-          "url": "/encoding/manifests/dash/{manifest_id}/periods/{value}/adaptationsets/custom",
+          "target": {
+            "url": "/encoding/manifests/dash/{manifest_id}/periods/{value}/adaptationsets/custom"
+          },
           "group": "adaptationsets",
           "precount": "$.data.result.totalCount"
         }
@@ -791,7 +1144,9 @@
           "type": "related",
           "title": "Audio",
           "jsonpath": "$",
-          "url": "/encoding/manifests/dash/{manifest_id}/periods/{period_id}",
+          "target": {
+            "url": "/encoding/manifests/dash/{manifest_id}/periods/{period_id}"
+          },
           "group": "dash"
         }
       ]
@@ -847,7 +1202,9 @@
           "description": "Description for the link",
           "type": "href",
           "jsonpath": "$..streamId",
-          "url": "/encoding/encodings/{encoding_id}/streams/{value}"
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/streams/{value}"
+          }
         }
       ]
     }
