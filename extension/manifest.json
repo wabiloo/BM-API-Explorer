@@ -1,10 +1,10 @@
 {
-  "name": "DJSON. JSON Viewer & Formatter",
+  "name": "BM-JSON. JSON Viewer, Formatter and Navigator for Bitmovin API responses",
   "short_name": "DJSON Viewer",
-  "version": "0.4.4",
+  "version": "0.1",
   "manifest_version": 2,
-  "description": "Extension to format and view JSON, from Web, Input or File.",
-  "homepage_url": "https://github.com/dardesantis/DJSON-Viewer",
+  "description": "Extension to format and view JSON, from Web, Input or File, and to navigate Bitmovin API objects",
+  "homepage_url": "https://github.com/wabiloo/BM-JSON-Viewer",
   "minimum_chrome_version": "35",
   "offline_enabled": true,
   "icons": {
@@ -16,7 +16,7 @@
     "default_icon": {
       "32": "icons/32.png"
     },
-    "default_title": "DJSON Viewer",
+    "default_title": "Bitmovin JSON Viewer",
     "default_popup": "popup.html"
   },
   "background": {
@@ -26,5 +26,8 @@
   "content_scripts": [
     { "matches": ["<all_urls>"], "js": ["js/content.js"], "run_at": "document_start" }
   ],
-  "permissions":["<all_urls>", "clipboardWrite", "tabs", "contextMenus"]
+  "permissions":["<all_urls>", "clipboardWrite", "tabs", "contextMenus"],
+  "web_accessible_resources": [
+    "resources/*"
+  ]
 }

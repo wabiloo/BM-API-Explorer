@@ -1,0 +1,772 @@
+{
+  "version": "0.1",
+  "pages": [
+    {
+      "description": "Any page",
+      "url": "/encoding",
+      "mappings": [
+        {
+          "description": "Highlight of identifier",
+          "type": "highlight",
+          "jsonpath": "$.data.result.id",
+          "classname": "identifier"
+        },
+        {
+          "description": "Highlight of error",
+          "type": "highlight",
+          "jsonpath": "$.data.details[?(@.type=='ERROR')].*",
+          "classname": "error"
+        },
+        {
+          "description": "Highlight of error",
+          "type": "highlight",
+          "jsonpath": "$.data.developerMessage",
+          "classname": "error"
+        },
+        {
+          "description": "Highlight of error",
+          "type": "highlight",
+          "jsonpath": "$.data.message",
+          "classname": "error"
+        },
+        {
+          "description": "Link to input objects",
+          "type": "href",
+          "jsonpath": "$..inputId",
+          "variables": [
+            {
+              "name": "type",
+              "type": "xhr",
+              "url": "/encoding/inputs/{value}/type",
+              "jsonpath": "$.data.result.type",
+              "transformation": "lowerCase"
+            }
+          ],
+          "url": "/encoding/inputs/{type}/{value}"
+        },
+        {
+          "description": "Link to output objects",
+          "type": "href",
+          "jsonpath": "$..outputId",
+          "variables": [
+            {
+              "name": "type",
+              "type": "xhr",
+              "url": "/encoding/outputs/{value}/type",
+              "jsonpath": "$.data.result.type",
+              "transformation": "lowerCase"
+            }
+          ],
+          "url": "/encoding/outputs/{type}/{value}"
+        }
+      ]
+    },
+    {
+      "description": "Any encoding page",
+      "url": "/encoding/encodings/{uuid}",
+      "variables": [
+        {
+          "name": "encoding_id",
+          "type": "url",
+          "regex": "encodings/({uuid})"
+        }
+      ],
+      "mappings": [
+        {
+          "description": "Encoding object",
+          "type": "related",
+          "title": "Object",
+          "jsonpath": "$.requestId",
+          "url": "/encoding/encodings/{encoding_id}",
+          "group": "encoding"
+        },
+        {
+          "description": "Encoding status",
+          "type": "related",
+          "title": "Status",
+          "jsonpath": "$.requestId",
+          "url": "/encoding/encodings/{encoding_id}/status",
+          "group": "encoding"
+        },
+        {
+          "description": "Encoding streams",
+          "type": "related",
+          "title": "Streams",
+          "jsonpath": "$.requestId",
+          "url": "/encoding/encodings/{encoding_id}/streams",
+          "group": "encoding",
+          "precount": "$.data.result.totalCount"
+        },
+        {
+          "description": "Encoding muxings",
+          "type": "related",
+          "title": "Muxings",
+          "jsonpath": "$.requestId",
+          "url": "/encoding/encodings/{encoding_id}/muxings",
+          "group": "encoding",
+          "precount": "$.data.result.totalCount"
+        },
+        {
+          "description": "Encoding keyframes",
+          "type": "related",
+          "title": "Keyframes",
+          "jsonpath": "$.requestId",
+          "url": "/encoding/encodings/{encoding_id}/keyframes",
+          "group": "encoding",
+          "precount": "$.data.result.totalCount"
+        },
+        {
+          "description": "DASH manifests",
+          "type": "related",
+          "title": "DASH",
+          "jsonpath": "$.requestId",
+          "url": "/encoding/manifests/dash?encodingId={encoding_id}",
+          "group": "manifests",
+          "precount": "$.data.result.totalCount"
+        },
+        {
+          "description": "HLS manifests",
+          "type": "related",
+          "title": "HLS",
+          "jsonpath": "$.requestId",
+          "url": "/encoding/manifests/hls?encodingId={encoding_id}",
+          "group": "manifests",
+          "precount": "$.data.result.totalCount"
+        },
+        {
+          "description": "Smooth manifests",
+          "type": "related",
+          "title": "Smooth",
+          "jsonpath": "$.requestId",
+          "url": "/encoding/manifests/smooth?encodingId={encoding_id}",
+          "group": "manifests",
+          "precount": "$.data.result.totalCount"
+        }
+      ]
+    },
+
+    {
+      "description": "Any page related to streams",
+      "url": "/encoding/encodings/{uuid}/streams",
+      "variables": [
+        {
+          "name": "stream_id",
+          "type": "url",
+          "regex": "streams/({uuid})"
+        }
+      ],
+      "mappings": [
+        {
+          "description": "Link to codec configuration objects",
+          "type": "href",
+          "jsonpath": "$..codecConfigId",
+          "variables": [
+            {
+              "name": "type",
+              "type": "xhr",
+              "url": "/encoding/configurations/{value}/type",
+              "jsonpath": "$.data.result.type",
+              "transformation": "codecType"
+            }
+          ],
+          "url": "/encoding/configurations/{type}/{value}"
+        },
+        {
+          "description": "Link to individual stream object",
+          "type": "href",
+          "jsonpath": "$..*[?(@.createdAt)].id",
+          "url": "/encoding/encodings/{encoding_id}/streams/{value}"
+        },
+        {
+          "description": "Button for Stream input details",
+          "type": "related",
+          "title": "Input Details",
+          "jsonpath": "$..*[?(@.createdAt)].id",
+          "url": "/encoding/encodings/{encoding_id}/streams/{value}/input",
+          "group": "stream"
+        },
+        {
+          "description": "Button for Stream filters",
+          "type": "related",
+          "title": "Filters",
+          "jsonpath": "$..*[?(@.createdAt)].id",
+          "url": "/encoding/encodings/{encoding_id}/streams/{value}/filters",
+          "group": "stream",
+          "precount": "$.data.result.filters"
+        },
+        {
+          "description": "Button for Stream Thumbnails",
+          "type": "related",
+          "title": "Thumbnails",
+          "jsonpath": "$..*[?(@.createdAt)].id",
+          "url": "/encoding/encodings/{encoding_id}/streams/{value}/thumbnails",
+          "group": "stream",
+          "precount": "$.data.result.totalCount"
+        },
+        {
+          "description": "Button for Stream Sprites",
+          "type": "related",
+          "title": "Sprites",
+          "jsonpath": "$..*[?(@.createdAt)].id",
+          "url": "/encoding/encodings/{encoding_id}/streams/{value}/sprites",
+          "group": "stream",
+          "precount": "$.data.result.totalCount"
+        }
+      ]
+    },
+    {
+      "description": "Pages related to a specific stream",
+      "url": "/encoding/encodings/{uuid}/streams/",
+      "mappings": [
+        {
+          "description": "Button for Stream object",
+          "type": "related",
+          "title": "Object",
+          "jsonpath": "$.requestId",
+          "url": "/encoding/encodings/{encoding_id}/streams/{stream_id}",
+          "group": "stream"
+        }
+      ]
+    },
+    {
+      "description": "Pages related to stream filters",
+      "url": "/encoding/encodings/{uuid}/streams/{uuid}/filters",
+      "mappings": [
+        {
+          "description": "Link to the filter object",
+          "type": "href",
+          "jsonpath": "$..filters..id",
+          "variables": [
+            {
+              "name": "filter_type",
+              "type": "xhr",
+              "url": "/encoding/filters/{value}/type",
+              "jsonpath": "$.data.result",
+              "transformation": "lowerCase"
+            }
+          ],
+          "url": "/encoding/filters/{filter_type}/{value}"
+        }
+      ]
+    },
+
+    {
+      "description": "Page for list of encoding muxings",
+      "url": "/encoding/encodings/{uuid}/muxings(?!\/)",
+      "mappings": [
+        {
+          "description": "Link to stream objects",
+          "type": "href",
+          "jsonpath": "$..streamId",
+          "url": "/encoding/encodings/{encoding_id}/streams/{value}"
+        },
+        {
+          "description": "Link to individual muxing objects in list",
+          "type": "href",
+          "jsonpath": "$..*[?(@.streams)].id",
+          "variables": [
+            {
+              "name": "muxing_type",
+              "type": "sibling",
+              "key": "type",
+              "transformation": "lowerCase"
+            }
+          ],
+          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{value}"
+        },
+        {
+          "description": "Button for Widevine DRM",
+          "type": "related",
+          "title": "Widevine",
+          "jsonpath": "$..*[?(@.type)].id",
+          "variables": [
+            {
+              "name": "muxing_type",
+              "type": "sibling",
+              "key": "type",
+              "transformation": "lowerCase"
+            }
+          ],
+          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{value}/drm/widevine",
+          "group": "drm",
+          "precount": "$.data.result.totalCount"
+        },
+        {
+          "description": "Button for PlayReady DRM",
+          "type": "related",
+          "title": "PlayReady",
+          "jsonpath": "$..*[?(@.type=='FMP4' || @.type=='MP4')].id",
+          "variables": [
+            {
+              "name": "muxing_type",
+              "type": "sibling",
+              "key": "type",
+              "transformation": "lowerCase"
+            }
+          ],
+          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{value}/drm/playready",
+          "group": "drm",
+          "precount": "$.data.result.totalCount"
+        },
+        {
+          "description": "Button for FairPlay DRM",
+          "type": "related",
+          "title": "FairPlay",
+          "jsonpath": "$..*[?(@.streams)].id",
+          "variables": [
+            {
+              "name": "muxing_type",
+              "type": "sibling",
+              "key": "type",
+              "transformation": "lowerCase"
+            }
+          ],
+          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{value}/drm/fairplay",
+          "group": "drm",
+          "precount": "$.data.result.totalCount"
+        },
+        {
+          "description": "Button for CENC DRM",
+          "type": "related",
+          "title": "CENC",
+          "jsonpath": "$..*[?(@.streams)].id",
+          "variables": [
+            {
+              "name": "muxing_type",
+              "type": "sibling",
+              "key": "type",
+              "transformation": "lowerCase"
+            }
+          ],
+          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{value}/drm/cenc",
+          "group": "drm",
+          "precount": "$.data.result.totalCount"
+        },
+        {
+          "description": "Button for ClearKey DRM",
+          "type": "related",
+          "title": "ClearKey",
+          "jsonpath": "$..*[?(@.streams)].id",
+          "variables": [
+            {
+              "name": "muxing_type",
+              "type": "sibling",
+              "key": "type",
+              "transformation": "lowerCase"
+            }
+          ],
+          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{value}/drm/clearkey",
+          "group": "drm",
+          "precount": "$.data.result.totalCount"
+        },
+        {
+          "description": "Button for Marlin DRM",
+          "type": "related",
+          "title": "Marlin",
+          "jsonpath": "$..*[?(@.streams)].id",
+          "variables": [
+            {
+              "name": "muxing_type",
+              "type": "sibling",
+              "key": "type",
+              "transformation": "lowerCase"
+            }
+          ],
+          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{value}/drm/marlin",
+          "group": "drm",
+          "precount": "$.data.result.totalCount"
+        },
+        {
+          "description": "Button for Primetime DRM",
+          "type": "related",
+          "title": "Primetime",
+          "jsonpath": "$..*[?(@.type=='FMP4' || @.type=='MP4')].id",
+          "variables": [
+            {
+              "name": "muxing_type",
+              "type": "sibling",
+              "key": "type",
+              "transformation": "lowerCase"
+            }
+          ],
+          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{value}/drm/primetime",
+          "group": "drm",
+          "precount": "$.data.result.totalCount"
+        },
+        {
+          "description": "Button for AES DRM",
+          "type": "related",
+          "title": "AES",
+          "jsonpath": "$..*[?(@.type=='TS')].id",
+          "variables": [
+            {
+              "name": "muxing_type",
+              "type": "sibling",
+              "key": "type",
+              "transformation": "lowerCase"
+            }
+          ],
+          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{value}/drm/aes",
+          "group": "drm",
+          "precount": "$.data.result.totalCount"
+        }
+
+
+      ]
+    },
+    {
+      "description": "Pages related to a specific muxing",
+      "url": "/encoding/encodings/{uuid}/muxings/\\w+/{uuid}",
+      "variables": [
+        {
+          "name": "muxing_type",
+          "type": "url",
+          "regex": "muxings/(\\w+)/{uuid}"
+        },
+        {
+          "name": "muxing_id",
+          "type": "url",
+          "regex": "muxings/\\w+/({uuid})"
+        }
+      ],
+      "mappings": [
+        {
+          "description": "Link to stream objects",
+          "type": "href",
+          "jsonpath": "$..streamId",
+          "url": "/encoding/encodings/{encoding_id}/streams/{value}"
+        },
+        {
+          "description": "Button for Muxing object",
+          "type": "related",
+          "title": "Object",
+          "jsonpath": "$.requestId",
+          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}",
+          "group": "muxing"
+        }
+      ]
+    },
+    {
+      "description": "Pages related to fmp4 muxings",
+      "url": "/encoding/encodings/{uuid}/muxings/fmp4/{uuid}",
+      "mappings": [
+        {
+          "description": "Button for Widevine DRM",
+          "type": "related",
+          "title": "Widevine",
+          "jsonpath": "$.data.result.id",
+          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/widevine",
+          "group": "drm",
+          "precount": "$.data.result.totalCount"
+        },
+        {
+          "description": "Button for PlayReady DRM",
+          "type": "related",
+          "title": "PlayReady",
+          "jsonpath": "$.data.result.id",
+          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/playready",
+          "group": "drm",
+          "precount": "$.data.result.totalCount"
+        },
+        {
+          "description": "Button for FairPlay DRM",
+          "type": "related",
+          "title": "FairPlay",
+          "jsonpath": "$.data.result.id",
+          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/fairplay",
+          "group": "drm",
+          "precount": "$.data.result.totalCount"
+        },
+        {
+          "description": "Button for CENC DRM",
+          "type": "related",
+          "title": "CENC",
+          "jsonpath": "$.data.result.id",
+          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/cenc",
+          "group": "drm",
+          "precount": "$.data.result.totalCount"
+        },
+        {
+          "description": "Button for ClearKey DRM",
+          "type": "related",
+          "title": "ClearKey",
+          "jsonpath": "$.data.result.id",
+          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/clearkey",
+          "group": "drm",
+          "precount": "$.data.result.totalCount"
+        },
+        {
+          "description": "Button for Marlin DRM",
+          "type": "related",
+          "title": "Marlin",
+          "jsonpath": "$.data.result.id",
+          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/marlin",
+          "group": "drm",
+          "precount": "$.data.result.totalCount"
+        },
+        {
+          "description": "Button for Primetime DRM",
+          "type": "related",
+          "title": "Primetime",
+          "jsonpath": "$.data.result.id",
+          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/primetime",
+          "group": "drm",
+          "precount": "$.data.result.totalCount"
+        },
+        {
+          "description": "Button for WebVTT captions",
+          "type": "related",
+          "title": "WebVTT",
+          "jsonpath": "$.data.result.id",
+          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/captions/webvtt",
+          "group": "captions",
+          "precount": "$.data.result.totalCount"
+        },
+        {
+          "description": "Button for TTML captions",
+          "type": "related",
+          "title": "TTML",
+          "jsonpath": "$.data.result.id",
+          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/captions/ttml",
+          "group": "captions",
+          "precount": "$.data.result.totalCount"
+        }
+
+
+      ]
+    },
+    {
+      "description": "Pages related to ts muxings",
+      "url": "/encoding/encodings/{uuid}/muxings/ts/{uuid}",
+      "mappings": [
+        {
+          "description": "Button for Widevine DRM",
+          "type": "related",
+          "title": "Widevine",
+          "jsonpath": "$.data.result.id",
+          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/widevine",
+          "group": "drm",
+          "precount": "$.data.result.totalCount"
+        },
+        {
+          "description": "Button for FairPlay DRM",
+          "type": "related",
+          "title": "FairPlay",
+          "jsonpath": "$.data.result.id",
+          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/fairplay",
+          "group": "drm",
+          "precount": "$.data.result.totalCount"
+        },
+        {
+          "description": "Button for CENC DRM",
+          "type": "related",
+          "title": "CENC",
+          "jsonpath": "$.data.result.id",
+          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/cenc",
+          "group": "drm",
+          "precount": "$.data.result.totalCount"
+        },
+        {
+          "description": "Button for Marlin DRM",
+          "type": "related",
+          "title": "Marlin",
+          "jsonpath": "$.data.result.id",
+          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/marlin",
+          "group": "drm",
+          "precount": "$.data.result.totalCount"
+        },
+        {
+          "description": "Button for AES DRM",
+          "type": "related",
+          "title": "AES",
+          "jsonpath": "$.data.result.id",
+          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/drm/AES",
+          "group": "drm",
+          "precount": "$.data.result.totalCount"
+        },
+        {
+          "description": "Button for CEA captions",
+          "type": "related",
+          "title": "CEA 608/708",
+          "jsonpath": "$.data.result.id",
+          "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}/captions/cea",
+          "group": "captions",
+          "precount": "$.data.result.totalCount"
+        }
+      ]
+    },
+
+    {
+      "description": "Pages related to manifests",
+      "url": "/encoding/manifests",
+      "mappings": [
+        {
+          "description": "Link to individual manifest object",
+          "type": "href",
+          "jsonpath": "$..*[?(@.type)].id",
+          "variables": [
+            {
+              "name": "manifest_type",
+              "type": "sibling",
+              "key": "type",
+              "transformation": "lowerCase"
+            }
+          ],
+          "url": "/encoding/manifests/{manifest_type}/{value}"
+        },
+        {
+          "description": "DASH Periods",
+          "type": "related",
+          "title": "Periods",
+          "jsonpath": "$.data..[?(@.type=='DASH')].id",
+          "url": "/encoding/manifests/dash/{value}/periods",
+          "group": "DASH",
+          "precount": "$.data.result.totalCount"
+        }
+      ]
+    },
+    {
+      "description": "Pages related to manifests for a specific encoding",
+      "url": "/encoding/manifests.*encodingId=",
+      "variables": [
+        {
+          "name": "encoding_id",
+          "type": "url",
+          "regex": "encodingId=({uuid})"
+        }
+      ],
+      "mappings": [
+        {
+          "description": "Encoding object",
+          "type": "related",
+          "title": "Object",
+          "jsonpath": "$.requestId",
+          "url": "/encoding/encodings/{encoding_id}",
+          "group": "encoding"
+        },
+        {
+          "description": "Encoding status",
+          "type": "related",
+          "title": "Status",
+          "jsonpath": "$.requestId",
+          "url": "/encoding/encodings/{encoding_id}/status",
+          "group": "encoding"
+        }
+      ]
+    },
+    {
+      "title": "THIS is a page about manifests",
+      "description": "Pages listing DASH manifests",
+      "url": "/encoding/manifests/dash/{uuid}",
+      "variables": [
+        {
+          "name": "manifest_id",
+          "type": "url",
+          "regex": "/dash/({uuid})"
+        }
+      ],
+      "mappings": [
+        {
+          "description": "DASH manifest",
+          "type": "related",
+          "title": "Manifest",
+          "jsonpath": "$.requestId",
+          "url": "/encoding/manifests/dash/{manifest_id}",
+          "group": "dash"
+        }
+      ]
+    },
+    {
+      "description": "Pages listing DASH periods",
+      "url": "/encoding/manifests/dash/{uuid}/periods/(?!.*adap)",
+      "mappings": [
+        {
+          "description": "DASH Periods",
+          "type": "href",
+          "title": "Periods",
+          "jsonpath": "$.data..id",
+          "url": "/encoding/manifests/dash/{manifest_id}/periods/{value}"
+        },
+        {
+          "description": "DASH Audio Adaptation Set",
+          "type": "related",
+          "title": "Audio",
+          "jsonpath": "$.data..id",
+          "url": "/encoding/manifests/dash/{manifest_id}/periods/{value}/adaptationsets/audio",
+          "group": "adaptationsets",
+          "precount": "$.data.result.totalCount"
+        },
+        {
+          "description": "DASH Video Adaptation Set",
+          "type": "related",
+          "title": "Video",
+          "jsonpath": "$.data..id",
+          "url": "/encoding/manifests/dash/{manifest_id}/periods/{value}/adaptationsets/video",
+          "group": "adaptationsets",
+          "precount": "$.data.result.totalCount"
+        },
+        {
+          "description": "DASH Subtitle Adaptation Set",
+          "type": "related",
+          "title": "Subtitle",
+          "jsonpath": "$.data..id",
+          "url": "/encoding/manifests/dash/{manifest_id}/periods/{value}/adaptationsets/subtitle",
+          "group": "adaptationsets",
+          "precount": "$.data.result.totalCount"
+        },
+        {
+          "description": "DASH Custom Adaptation Set",
+          "type": "related",
+          "title": "Custom",
+          "jsonpath": "$.data..id",
+          "url": "/encoding/manifests/dash/{manifest_id}/periods/{value}/adaptationsets/custom",
+          "group": "adaptationsets",
+          "precount": "$.data.result.totalCount"
+        }
+
+      ]
+    },
+    {
+      "description": "Pages related to specific DASH period",
+      "url": "/encoding/manifests/dash/{uuid}/periods/{uuid}",
+      "variables": [
+        {
+          "name": "period_id",
+          "type": "url",
+          "regex": "/periods/({uuid})"
+        }
+      ],
+      "mappings": [
+        {
+          "description": "DASH Period",
+          "type": "related",
+          "title": "Audio",
+          "jsonpath": "$.requestId",
+          "url": "/encoding/manifests/dash/{manifest_id}/periods/{period_id}",
+          "group": "dash"
+        }
+      ]
+    },
+
+    {
+      "description": "Template",
+      "url": "/regex/for/page/url",
+      "variables": [
+        {
+          "name": "var_name",
+          "type": "url",
+          "regex": "/regex/to/({part})"
+        }
+      ],
+      "mappings": [
+        {
+          "description": "Description for the link",
+          "type": "href",
+          "jsonpath": "$..streamId",
+          "url": "/encoding/encodings/{encoding_id}/streams/{value}"
+        }
+      ]
+    }
+
+  ]
+}

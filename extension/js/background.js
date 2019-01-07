@@ -86,6 +86,9 @@
         TYPE_NULL = 6
         ;
 
+    var
+        UUID_REGEX = "(\\w{8}-\\w{4}-\\w{4}-\\w{4}-\\w{12})";
+
     // Utility functions
     function removeComments(str) {
         str = ('__' + str + '__').split('');
@@ -221,7 +224,7 @@
     };
 
     // Core recursive DOM-building function
-    function getdObjDOM(value, keyName, startCollapsed, isRoot) {
+    function getdObjDOM(value, keyName, startCollapsed, isRoot, decorations) {
         var type,
             dObj,
             nonZeroSize,
@@ -245,6 +248,15 @@
             type = TYPE_ARRAY;
         } else {
             type = TYPE_OBJECT;
+        }
+
+        // intercept decorations
+        if ((type === TYPE_OBJECT) && (value.hasOwnProperty('bmDecorations'))) {
+            try {
+                return getdObjDOM(value.actualValue, keyName, startCollapsed, false, value.bmDecorations)
+            } catch (e) {
+                console.error(e)
+            }
         }
 
         // Root node for this dObj
@@ -298,9 +310,22 @@
                     innerStringA.innerText = escapedString;
                     innerStringEl.appendChild(innerStringA);
                 }
+                // Add a link if the decorations stipulate one
+                if (decorations && decorations.hasOwnProperty('href')) {
+                  var innerStringA = document.createElement('A');
+                  innerStringA.href = decorations.href;
+                  innerStringA.innerText = escapedString;
+                  innerStringEl.appendChild(innerStringA);
+                }
                 else {
                     innerStringEl.innerText = escapedString;
                 }
+
+                if (decorations && decorations.hasOwnProperty('classnames')) {
+                    //innerStringEl.classList = innerStringEl.classList.add.apply(innerStringEl.classList, decorations['classnames']);
+                    innerStringEl.classList.add.apply(innerStringEl.classList, decorations['classnames']);
+                }
+
                 valueElement = templates.t_string.cloneNode(false);
                 valueElement.appendChild(templates.t_dblqText.cloneNode(false));
                 valueElement.appendChild(innerStringEl);
@@ -405,6 +430,45 @@
             numChildClasses[dObjChildLength] = 1;
         }
 
+        // add additional links/buttons if relevant
+        if (decorations && decorations.hasOwnProperty('related')) {
+            // we group them
+            var groups = decorations['related'].reduce(function (acc, d) {
+                var name = d.group || "none";
+                acc[name] = acc[name] || [];
+                acc[name].push(d);
+                return acc;
+            }, Object.create(null));
+
+            var links = getSpanClass('links');
+
+            // we iterate through the groups to render them
+            Object.keys(groups).forEach(function(k) {
+                var linkgroup;
+                if (k !== "none") {
+                    linkgroup = getSpanClass('group');
+                    var title = getSpanClass('title');
+                    title.innerText = k;
+                    linkgroup.appendChild(title);
+                    links.appendChild(linkgroup);
+                } else {
+                    linkgroup = links;
+                }
+
+                // and we add the various links
+                for (let rel of groups[k]) {
+                    var button = document.createElement('A');
+                    button.href = rel['href'];
+                    button.innerText = rel["title"];
+                    if (rel.hasOwnProperty('classname')) {
+                        button.classList.add(rel.classname)
+                    }
+                    linkgroup.appendChild(button);
+                }
+            });
+
+            dObj.appendChild(links)
+        }
         return dObj;
     }
 
@@ -522,6 +586,318 @@
                 });
             });
         });
+    }
+
+    function loadBitmovinApiJSON(callback) {
+        var path = chrome.runtime.getURL("resources/bitmovin-api-mapping.json");
+        var xobj = new XMLHttpRequest();
+        xobj.overrideMimeType("application/json");
+        xobj.open('GET', path, true); // Replace 'my_data' with the path to your file
+        xobj.onreadystatechange = function () {
+            if (xobj.readyState == 4 && xobj.status == "200") {
+                // Required use of an anonymous callback as .open will NOT return a value but simply returns undefined in asynchronous mode
+                callback(xobj.responseText);
+            }
+        };
+        xobj.send(null);
+    }
+
+    function decorateBitmovinJson(json, callback) {
+        loadBitmovinApiJSON(function(definition) {
+            var def = JSON.parse(definition);
+            console.log("Bitmovin API Definition", def);
+
+            // find relevant URL
+            chrome.tabs.query({currentWindow: true, active: true}, async function (tabs) {
+                var thisurl = tabs[0].url;
+
+                // find parts of the definition that apply to the current URL
+                var pagedefs = def.pages.filter(function(p) {
+                    // we replace the "{uuid}" placeholders by proper UUID regex
+                    return thisurl.match(p.url.replace(/\{uuid\}/g, UUID_REGEX))
+                });
+
+                if (pagedefs.length === 0) {
+                    console.log(`No mapping definition found for the current URL '${thisurl}'`);
+                    callback(json);
+                    return false;
+                } else {
+                    var nodeDecorations = {};
+                    var pageExtracts = {};
+
+                    // we go through every relevant page definition
+                    for (let pagedef of pagedefs) {
+                        console.log(`Processing definition for page: ${pagedef.url}`);
+                        var context = { pageUrl: thisurl };
+
+                        // we process page variables
+                        var thisPageExtracts = {};
+                        if (pagedef.hasOwnProperty('variables')) {
+                            thisPageExtracts = await extractVariables(context, pagedef.variables, json)
+                            pageExtracts = Object.assign(thisPageExtracts, pageExtracts)
+                        }
+
+                        // from this, there are 1 or more re-mappings to perform
+                        if (pagedef.hasOwnProperty('mappings')) {
+                            for (let mapdef of pagedef.mappings) {
+                                console.log(`Processing re-mapping: ${mapdef.description}`);
+
+                                // we use JSON path to find relevant nodes in the JSON payload
+                                var nodes = jsonpath.nodes(json, mapdef.jsonpath);
+
+                                // we iterate through the nodes
+                                for (let node of nodes) {
+                                    var nodePath = jsonpath.stringify(node.path);
+
+                                    // we add contextual info to the node
+                                    node = Object.assign(node, context);
+                                    // We extract (and possibly overwrite) all additional relevant variables
+                                    var extracts = await extractVariables(node, mapdef.variables, json);
+                                    extracts = Object.assign(extracts, pageExtracts);
+
+                                    // we find or generate a decoration template
+                                    var deco;
+                                    if (nodeDecorations.hasOwnProperty(nodePath)) {
+                                        deco = nodeDecorations[nodePath];
+                                    } else {
+                                        deco = getBitmovinDecoration(extracts['value']);
+                                    }
+
+                                    // ... and add the relevant decorations
+                                    var linkurl;
+                                    if (mapdef.url) {
+                                        // replace all placeholders by the extracted value
+                                        var resolvedurl = resolvePlaceholders(mapdef.url, extracts);
+                                        linkurl = createBitmovinApiURL(thisurl, resolvedurl, false);
+                                    }
+                                    // Generate the decoration
+                                    switch (mapdef.type) {
+                                        case "href":
+                                            deco = addBitmovinDecoration(deco, "href", linkurl);
+                                            break;
+
+                                        case "related":
+                                            mapdef['hrefurl'] = linkurl;
+
+                                            if (mapdef.precount) {
+                                                try {
+                                                    // Pre-request the URL to get the count
+                                                    var response = await requestBitmovinApiURL(linkurl);
+                                                    var count = jsonpath.value(response, mapdef.precount);
+                                                    if (count instanceof Array) {
+                                                        count = count.length
+                                                    }
+                                                    mapdef.itemcount = count;
+                                                } catch (e) {
+                                                    mapdef.itemcount = 'error';
+                                                }
+                                            }
+
+                                            // Generate a decoration
+                                            deco = addBitmovinDecoration(deco, "related", mapdef);
+                                            break;
+
+                                        case "highlight":
+                                            deco = addBitmovinDecoration(deco, "cssclass", mapdef['classname']);
+                                    }
+
+                                    // and we add the decoration to the dictionary, with the path being the key
+                                    nodeDecorations[jsonpath.stringify(node.path)] = deco;
+
+                                }
+                            }
+                        }
+                    } // end of pagedef processing
+
+                    // When all is done, we apply all the decorations to the JSON node
+                    Object.keys(nodeDecorations).forEach(function(k) {
+                        jsonpath.value(json, k, nodeDecorations[k]);
+                    });
+
+                    callback(obj);
+
+                    return true;
+                }
+            });
+        })
+    }
+
+    async function extractVariables(context, variableDefinitions, fulljson) {
+        // ... extract some variables
+        var extracts = {};
+        if (context.hasOwnProperty('value')) {
+            extracts['value'] = context.value;
+        }
+        if (context.hasOwnProperty('path')) {
+            extracts['path'] = context.path;
+            extracts['jsonpath'] = jsonpath.stringify(context.path);
+        }
+
+        // some of which need extra processing
+        if (variableDefinitions) {
+            for (let vardef of variableDefinitions) {
+                var value;
+                switch (vardef.type) {
+                    case "url":
+                        // extract a component from the page URL
+                        var rx = vardef.regex.replace("{uuid}", UUID_REGEX);
+                        var res = context.pageUrl.match(rx);
+                        if (res) {
+                            value = res[1];
+                        }
+                        break;
+
+                    case "xhr":
+                        // prepare URL to call
+                        var urltocall = resolvePlaceholders(vardef.url, extracts);
+                        urltocall = createBitmovinApiURL(context.pageUrl, urltocall, false);
+                        // make the call and parse the result
+                        var response = await requestBitmovinApiURL(urltocall);
+                        value = jsonpath.value(response, vardef.jsonpath);
+
+                        break;
+
+                    case "sibling":
+                        // extract a sibling node
+                        // create a copy of the path and replace the last element
+                        var siblingpath = extracts['path'].slice();
+                        siblingpath.pop();
+                        siblingpath.push(vardef.key);
+                        siblingpath = jsonpath.stringify(siblingpath);
+                        value = jsonpath.value(fulljson, siblingpath);
+                        break;
+                }
+
+                // reformat the response accordingly
+                if (vardef.transformation) {
+                    value = reformatValues(value, vardef.transformation)
+                }
+                extracts[vardef.name] = value;
+            }
+        }
+        return extracts
+    }
+
+    function getBitmovinDecoration(actualValue) {
+        var deco = {
+            "bmDecorations": {
+                "related": [],
+                "classnames": []
+            }
+        };
+        // pass the actual value down
+        deco['actualValue'] = actualValue;
+
+        return deco
+    }
+
+    function addBitmovinDecoration(deco, type, info) {
+        switch (type) {
+            case "href":
+                deco['bmDecorations']['href'] = info;
+                break;
+
+            case "related":
+                var rel = {
+                    "title": info.title,
+                    "href": info.hrefurl,
+                    "group": info.group
+                };
+                if (info.hasOwnProperty('itemcount')) {
+                    rel.title = rel.title + ": " + info.itemcount;
+                    if (!info.itemcount) {
+                        rel.classname = "zerocount";
+                    }
+                    if (info.itemcount === 'error') {
+                        rel.classname = "error";
+                    }
+                }
+                deco['bmDecorations']['related'].push(rel);
+                break;
+
+            case "cssclass":
+                deco['bmDecorations']['classnames'].push(info);
+                break;
+        }
+        return deco;
+    }
+
+    function createBitmovinApiURL(fromurl, path) {
+        var apikey, orgid;
+        // get api and org IDs
+        var res1 = fromurl.match("X-Api-Key=" + UUID_REGEX);
+        if (res1) {
+            apikey = res1[1]
+        }
+
+        var res2 = fromurl.match("X-Tenant-Org-Id=" + UUID_REGEX);
+        if (res2) {
+            apikey = res2[1]
+        }
+
+        var newurl;
+        newurl = "https://api.bitmovin.com/v1";
+        newurl += path;
+        if (path.search(/\?/) === -1) {
+            newurl += "?"
+        } else {
+            newurl += "&"
+        }
+
+        if (apikey) {
+            newurl += "X-Api-Key=" + apikey
+        }
+        if (orgid) {
+            newurl += "&X-Tenant-Org-Id=" + orgid
+        }
+
+        return newurl
+    }
+
+    function requestBitmovinApiURL(url) {
+        return new Promise(function(resolve, reject) {
+            const xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function(e) {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        resolve(JSON.parse(xhr.response))
+                    } else {
+                        reject(xhr.status)
+                    }
+                }
+            }
+            xhr.ontimeout = function () {
+                reject('timeout')
+            }
+            xhr.open('get', url, true)
+            xhr.send()
+        })
+    }
+
+    function resolvePlaceholders(string, variables) {
+        return string.replace(/\{\w+\}/g, function(match) {
+            var varname = match.substr(1, match.length-2);
+            return variables[varname]
+        });
+    }
+
+    function reformatValues(value, method) {
+        switch (method) {
+            case "lowerCase":
+                return value.toLowerCase();
+                break;
+
+            case "codecType":
+                var t = value.toLowerCase();
+                var audio = ['aac', 'he-aac-v1', 'he-aac-v2', 'vorbis', 'opus', 'ac3', 'eac3', 'mp2', 'mp3'];
+                var video = ['h264', 'h265', 'vp8', 'vp9', 'av1', 'mjpeg'];
+                if (audio.includes(t)) {
+                    return "audio/" + t
+                }
+                if (video.includes(t)) {
+                    return "video/" + t
+                }
+        }
     }
 
     // Listen for requests from content pages wanting to set up a port
@@ -645,12 +1021,18 @@
                 // And send it the message to confirm that we're now formatting (so it can show a spinner)
                 port.postMessage(['FORMATTING', JSON.stringify(localStorage)]);
 
-                // Do formatting
-                var startCollapsed = localStorage.getItem('startCollapsed') || (localStorage.getItem('startCollapsedIfBig') && text.length > 1000000)
-                var html = jsonObjToHTML(obj, jsonpFunctionName, localStorage.getItem('startCollapsed'));
+                // Decorate the JSON response with Bitmovin API specific information
+                window.undecoratedJSON = obj;
+                decorateBitmovinJson(obj, function(newobj) {
+                    window.decoratedJSON = newobj;
 
-                // Post the HTML string to the content script
-                port.postMessage(['FORMATTED', html, validJsonText, JSON.stringify(localStorage), JSON.stringify(Object.keys(numChildClasses))]);
+                    // Do formatting
+                    var startCollapsed = localStorage.getItem('startCollapsed') || (localStorage.getItem('startCollapsedIfBig') && text.length > 1000000)
+                    var html = jsonObjToHTML(newobj, jsonpFunctionName, localStorage.getItem('startCollapsed'));
+
+                    // Post the HTML string to the content script
+                    port.postMessage(['FORMATTED', html, validJsonText, JSON.stringify(localStorage), JSON.stringify(Object.keys(numChildClasses))]);
+                });
             }
 
             else if (msg.type === 'COPY PATH') {

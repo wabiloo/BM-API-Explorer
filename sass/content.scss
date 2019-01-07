@@ -4,9 +4,13 @@ $color-background: white;
 $color-text: #444;
 $color-text-dark: #333;
 $color-key: black;
-$color-value: #0B7500;
-$color-url-hover: #050;
+$color-value: #6dad66;
+$color-url-hover: #3da7de;
 $color-null: #1A01CC;
+$color-extlink-back: #caddf9;
+$color-extlink-zero: #d4d2d2;
+$color-bg-identifier: lightgoldenrodyellow;
+$color-error: red;
 
 body {
   -webkit-user-select: text;
@@ -230,12 +234,13 @@ pre {
 
 .s {
   color: $color-value;
+  //font-weight: bold;
   word-wrap: break-word;
 }
 
 a:link, a:visited {
   text-decoration: none;
-  color: inherit;
+  color: $color-url-hover;
 }
 
 a:hover, a:active {
@@ -250,6 +255,50 @@ a:hover, a:active {
 
 .key { /* key */
   color: $color-key;
+}
+
+.identifier {
+  font-weight: bold;
+  background: $color-bg-identifier
+}
+.error {
+  color: $color-error;
+}
+
+.links {
+  font-family: sans-serif;
+  font-size: smaller;
+
+  .group {
+    margin-left: 10px;
+    padding: 4px;
+    border: 1px solid lightgrey;
+    border-radius: 5px;
+
+    .title {
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+  }
+
+  a {
+    margin-left: 10px;
+    padding: 2px 5px 2px 5px;
+    background: $color-extlink-back;
+    border-radius: 3px;
+    color: $color-text;
+  }
+  a.zerocount {
+    background: $color-extlink-zero;
+  }
+  a.error {
+    background: $color-error;
+  }
+
+  a:hover, a:active {
+    background: $color-url-hover;
+    color: white !important;
+  }
 }
 
 .nested:after {
