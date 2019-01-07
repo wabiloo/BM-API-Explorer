@@ -11,6 +11,7 @@ $color-extlink-back: #caddf9;
 $color-extlink-zero: #d4d2d2;
 $color-bg-identifier: lightgoldenrodyellow;
 $color-error: red;
+$color-bg-header: #EBF4F8;
 
 body {
   -webkit-user-select: text;
@@ -298,6 +299,20 @@ a:hover, a:active {
   a:hover, a:active {
     background: $color-url-hover;
     color: white !important;
+  }
+}
+.jsonHeader {
+  padding: 1px;
+  background-color: $color-bg-header;
+
+  .headerLinks {
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+  h1 {
+    font-size: large;
+    font-family: sans-serif;
+    padding-left: 15px;
   }
 }
 

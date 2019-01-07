@@ -29,6 +29,7 @@
     var obj,
         path,
         numChildClasses,
+        pageDecorations,
         fns = {
             copyPath: function () {
                 copy(path)
@@ -253,7 +254,8 @@
         // intercept decorations
         if ((type === TYPE_OBJECT) && (value.hasOwnProperty('bmDecorations'))) {
             try {
-                return getdObjDOM(value.actualValue, keyName, startCollapsed, false, value.bmDecorations)
+                // recurse with only the value
+                return getdObjDOM(value['bmDecorations'].actualValue, keyName, startCollapsed, false, value.bmDecorations)
             } catch (e) {
                 console.error(e)
             }
@@ -432,40 +434,7 @@
 
         // add additional links/buttons if relevant
         if (decorations && decorations.hasOwnProperty('related')) {
-            // we group them
-            var groups = decorations['related'].reduce(function (acc, d) {
-                var name = d.group || "none";
-                acc[name] = acc[name] || [];
-                acc[name].push(d);
-                return acc;
-            }, Object.create(null));
-
-            var links = getSpanClass('links');
-
-            // we iterate through the groups to render them
-            Object.keys(groups).forEach(function(k) {
-                var linkgroup;
-                if (k !== "none") {
-                    linkgroup = getSpanClass('group');
-                    var title = getSpanClass('title');
-                    title.innerText = k;
-                    linkgroup.appendChild(title);
-                    links.appendChild(linkgroup);
-                } else {
-                    linkgroup = links;
-                }
-
-                // and we add the various links
-                for (let rel of groups[k]) {
-                    var button = document.createElement('A');
-                    button.href = rel['href'];
-                    button.innerText = rel["title"];
-                    if (rel.hasOwnProperty('classname')) {
-                        button.classList.add(rel.classname)
-                    }
-                    linkgroup.appendChild(button);
-                }
-            });
+            var links = relatedDecorationsToDOM(decorations['related']);
 
             dObj.appendChild(links)
         }
@@ -474,9 +443,15 @@
 
     // Function to convert object to an HTML string
     function jsonObjToHTML(obj, jsonpFunctionName, startCollapsed) {
-
         // reset number of children
         numChildClasses = {};
+        pageDecorations = {};
+
+        // extract page decorations
+        if (obj.hasOwnProperty('__bmPageDecorations')) {
+            pageDecorations = obj['__bmPageDecorations'];
+            delete obj['__bmPageDecorations'];
+        }
 
         // Format object (using recursive dObj builder)
         var rootDObj = getdObjDOM(obj, false, startCollapsed, true);
@@ -494,6 +469,29 @@
         // Convert it to an HTML string (shame about this step, but necessary for passing it through to the content page)
         var returnHTML = divFormattedJson.outerHTML;
 
+        // Add page decorations
+        if (pageDecorations) {
+            var divPageHeader = document.createElement('DIV');
+            divPageHeader.classList.add('jsonHeader');
+
+            if (pageDecorations.hasOwnProperty('pagetitle')) {
+                var title = document.createElement('H1');
+                title.innerText = pageDecorations.pagetitle;
+                divPageHeader.appendChild(title);
+            }
+
+            // add related objects
+            if (pageDecorations.hasOwnProperty('related')) {
+                var headerLinks = document.createElement('DIV');
+                headerLinks.classList.add('headerLinks');
+                divPageHeader.appendChild(headerLinks);
+
+                var links = relatedDecorationsToDOM(pageDecorations['related']);
+                headerLinks.appendChild(links);
+            }
+            returnHTML = divPageHeader.outerHTML + returnHTML;
+        }
+
         // Top and tail with JSONP padding if necessary
         if (jsonpFunctionName !== null) {
             returnHTML =
@@ -504,6 +502,44 @@
 
         // Return the HTML
         return returnHTML;
+    }
+
+    function relatedDecorationsToDOM(decorations) {
+        // we group them
+        var groups = decorations.reduce(function (acc, d) {
+            var name = d.group || "none";
+            acc[name] = acc[name] || [];
+            acc[name].push(d);
+            return acc;
+        }, Object.create(null));
+
+        var links = getSpanClass('links');
+
+        // we iterate through the groups to render them
+        Object.keys(groups).forEach(function(k) {
+            var linkgroup;
+            if (k !== "none") {
+                linkgroup = getSpanClass('group');
+                var title = getSpanClass('title');
+                title.innerText = k;
+                linkgroup.appendChild(title);
+                links.appendChild(linkgroup);
+            } else {
+                linkgroup = links;
+            }
+
+            // and we add the various links
+            for (let rel of groups[k]) {
+                var button = document.createElement('A');
+                button.href = rel['href'];
+                button.innerText = rel["title"];
+                if (rel.hasOwnProperty('classname')) {
+                    button.classList.add(rel.classname)
+                }
+                linkgroup.appendChild(button);
+            }
+        });
+        return links
     }
 
     function copy(value) {
@@ -603,6 +639,8 @@
     }
 
     function decorateBitmovinJson(json, callback) {
+        var makeXhrCalls = localStorage.getItem('makeRelatedXhrCalls') || false;
+
         loadBitmovinApiJSON(function(definition) {
             var def = JSON.parse(definition);
             console.log("Bitmovin API Definition", def);
@@ -622,7 +660,7 @@
                     callback(json);
                     return false;
                 } else {
-                    var nodeDecorations = {};
+                    var nodeDecorations = {};  // hash table of decoration objects, with application path as key
                     var pageExtracts = {};
 
                     // we go through every relevant page definition
@@ -630,10 +668,17 @@
                         console.log(`Processing definition for page: ${pagedef.url}`);
                         var context = { pageUrl: thisurl };
 
-                        // we process page variables
+                        // we extract the page title
+                        if (pagedef.hasOwnProperty('title')) {
+                            var pagetitle = nodeDecorations['$'] || getBitmovinDecoration();
+                            pagetitle = addBitmovinDecoration(pagetitle, 'pagetitle', pagedef.title)
+                            nodeDecorations['$'] = pagetitle;
+                        }
+
+                        // we extract page variables
                         var thisPageExtracts = {};
                         if (pagedef.hasOwnProperty('variables')) {
-                            thisPageExtracts = await extractVariables(context, pagedef.variables, json)
+                            thisPageExtracts = await extractVariables(context, pagedef.variables, json);
                             pageExtracts = Object.assign(thisPageExtracts, pageExtracts)
                         }
 
@@ -679,7 +724,7 @@
                                         case "related":
                                             mapdef['hrefurl'] = linkurl;
 
-                                            if (mapdef.precount) {
+                                            if (makeXhrCalls && mapdef.precount) {
                                                 try {
                                                     // Pre-request the URL to get the count
                                                     var response = await requestBitmovinApiURL(linkurl);
@@ -710,11 +755,27 @@
                     } // end of pagedef processing
 
                     // When all is done, we apply all the decorations to the JSON node
-                    Object.keys(nodeDecorations).forEach(function(k) {
-                        jsonpath.value(json, k, nodeDecorations[k]);
+                    console.log("Decorations:", nodeDecorations);
+
+                    // Needs to apply from trees to root (most specific first) to avoid overwrites
+                    // that would invalidate JSON paths
+                    var paths = Object.keys(nodeDecorations);
+                    paths = paths.sort(function(p1, p2) {
+                        return (jsonpath.parse(p2).length - jsonpath.parse(p1).length);
+                    });
+                    console.log("Order of application:", paths);
+
+                    paths.forEach(function(p) {
+                        console.log("changing path:", p );
+                        // special treatment for root, due to bug in jsonpath and not wanting to modify the root object
+                        if (p === '$') {
+                            json['__bmPageDecorations'] = nodeDecorations[p]
+                        } else {
+                            jsonpath.value(json, p, {'bmDecorations': nodeDecorations[p]});
+                        }
                     });
 
-                    callback(obj);
+                    callback(json);
 
                     return true;
                 }
@@ -780,13 +841,13 @@
 
     function getBitmovinDecoration(actualValue) {
         var deco = {
-            "bmDecorations": {
-                "related": [],
-                "classnames": []
-            }
+            "related": [],
+            "classnames": []
         };
-        // pass the actual value down
-        deco['actualValue'] = actualValue;
+        if (actualValue) {
+            // pass the actual value down
+            deco['actualValue'] = actualValue;
+        }
 
         return deco
     }
@@ -794,7 +855,7 @@
     function addBitmovinDecoration(deco, type, info) {
         switch (type) {
             case "href":
-                deco['bmDecorations']['href'] = info;
+                deco['href'] = info;
                 break;
 
             case "related":
@@ -812,12 +873,15 @@
                         rel.classname = "error";
                     }
                 }
-                deco['bmDecorations']['related'].push(rel);
+                deco['related'].push(rel);
                 break;
 
             case "cssclass":
-                deco['bmDecorations']['classnames'].push(info);
+                deco['classnames'].push(info);
                 break;
+
+            default:
+                deco[type] = info;
         }
         return deco;
     }

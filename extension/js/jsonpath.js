@@ -4888,7 +4888,11 @@ JSONPath.prototype.parent = function(obj, string) {
 
   var node = this.nodes(obj, string)[0];
   var key = node.path.pop(); /* jshint unused:false */
-  return this.value(obj, node.path);
+  if (key !== '$') {
+      return this.value(obj, node.path);
+  } else {
+      return obj;
+  }
 }
 
 JSONPath.prototype.apply = function(obj, string, fn) {
@@ -4922,7 +4926,12 @@ JSONPath.prototype.value = function(obj, path, value) {
     if (!node) return this._vivify(obj, path, value);
     var key = node.path.slice(-1).shift();
     var parent = this.parent(obj, this.stringify(node.path));
-    parent[key] = value;
+    if (key !== '$') {
+        parent[key] = value;
+    } else {
+        // Does NOT work - doesn't actually alter obj (unlike other cases)
+        obj = value;
+    }
   }
   return this.query(obj, this.stringify(path), 1).shift();
 }

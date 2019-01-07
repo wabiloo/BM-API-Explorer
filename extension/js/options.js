@@ -73,4 +73,7 @@
     // show always count of children
     optionInit("showAlwaysCountCheckbox");
 
+    // show always count of children
+    optionInit("makeRelatedXhrCalls");
+
 })();
