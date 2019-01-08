@@ -278,12 +278,12 @@
     },
     {
       "description": "Encoding start details",
-      "url": "/encoding/encodings/{uuid}/start",
+      "url": "/encoding/encodings/{encoding_id:uuid}/start",
       "title": "Encoding Start Details"
     },
     {
       "description": "Live Encoding details",
-      "url": "/encoding/encodings/{uuid}/live",
+      "url": "/encoding/encodings/{encoding_id:uuid}/live",
       "title": "Live Encoding Details",
       "mappings": [
         {
@@ -311,14 +311,14 @@
     },
     {
       "description": "Live encoding start details",
-      "url": "/encoding/encodings/{uuid}/live/start",
+      "url": "/encoding/encodings/{encoding_id:uuid}/live/start",
       "title": "Live Encoding Start Details"
     },
 
     {
       "description": "List of streams",
       "title": "List of Streams",
-      "url": "/encoding/encodings/{uuid}/streams",
+      "url": "/encoding/encodings/{encoding_id:uuid}/streams",
       "mappings": [
         {
           "description": "Link to individual stream object",
@@ -326,6 +326,42 @@
           "jsonpath": "$.data.result.items[*].id",
           "target": {
             "url": "/encoding/encodings/{encoding_id}/streams/{value}"
+          }
+        },
+        {
+          "description": "Link to codec configuration objects",
+          "type": "href",
+          "jsonpath": "$..codecConfigId",
+          "variables": [
+            {
+              "name": "type",
+              "type": "xhr",
+              "url": "/encoding/configurations/{value}/type",
+              "jsonpath": "$.data.result.type",
+              "transformation": "codecType"
+            }
+          ],
+          "target": {
+            "url": "/encoding/configurations/{type}/{value}"
+          }
+        },
+        {
+          "description": "Info of type for codec configuration objects",
+          "type": "related",
+          "title": "type",
+          "jsonpath": "$..codecConfigId",
+          "group": "codec",
+          "variables": [
+            {
+              "name": "type",
+              "type": "xhr",
+              "url": "/encoding/configurations/{value}/type",
+              "jsonpath": "$.data.result.type",
+              "transformation": "codecType"
+            }
+          ],
+          "presentation": {
+            "suffix": "{type}"
           }
         },
         {
@@ -405,26 +441,9 @@
     },
     {
       "description": "Any page related to a specific stream",
-      "url": "/encoding/encodings/{uuid}/streams/{stream_id:uuid}",
+      "url": "/encoding/encodings/{encoding_id:uuid}/streams/{stream_id:uuid}",
       "title": "Details of Stream: {stream_id}",
       "mappings": [
-        {
-          "description": "Link to codec configuration objects",
-          "type": "href",
-          "jsonpath": "$..codecConfigId",
-          "variables": [
-            {
-              "name": "type",
-              "type": "xhr",
-              "url": "/encoding/configurations/{value}/type",
-              "jsonpath": "$.data.result.type",
-              "transformation": "codecType"
-            }
-          ],
-          "target": {
-            "url": "/encoding/configurations/{type}/{value}"
-          }
-        },
         {
           "description": "Button for Stream object",
           "type": "related",
@@ -513,13 +532,13 @@
 
     {
       "description": "Pages related to stream input",
-      "url": "/encoding/encodings/{uuid}/streams/{uuid}/input",
+      "url": "/encoding/encodings/{encoding_id:uuid}/streams/{stream_id:uuid}/input",
       "title": "Stream input details"
     },
     {
       "description": "Pages related to stream filters",
       "title": "List of Stream Filters",
-      "url": "/encoding/encodings/{uuid}/streams/{uuid}/filters",
+      "url": "/encoding/encodings/{encoding_id:uuid}/streams/{stream_id:uuid}/filters",
       "mappings": [
         {
           "description": "Link to the filter object",
@@ -544,7 +563,7 @@
     {
       "description": "Page for list of encoding muxings",
       "title": "List of Muxings",
-      "url": "/encoding/encodings/{uuid}/muxings(?!\/)",
+      "url": "/encoding/encodings/{encoding_id:uuid}/muxings(?!\/)",
       "mappings": [
         {
           "description": "Link to stream objects",
@@ -806,7 +825,7 @@
     },
     {
       "description": "Pages related to a specific muxing",
-      "url": "/encoding/encodings/{uuid}/muxings/{muxing_type:type}/{muxing_id:uuid}",
+      "url": "/encoding/encodings/{encoding_id:uuid}/muxings/{muxing_type:type}/{muxing_id:uuid}",
       "title": "Details of Muxing ({muxing_type}): {muxing_id}",
       "mappings": [
         {
@@ -831,7 +850,7 @@
     },
     {
       "description": "Pages related to fmp4 muxings",
-      "url": "/encoding/encodings/{uuid}/muxings/fmp4/{uuid}",
+      "url": "/encoding/encodings/{encoding_id:uuid}/muxings/fmp4/{muxing_id:uuid}",
       "mappings": [
         {
           "description": "Button for Widevine DRM",
@@ -1028,7 +1047,7 @@
     },
     {
       "description": "Pages related to ts muxings",
-      "url": "/encoding/encodings/{uuid}/muxings/ts/{uuid}",
+      "url": "/encoding/encodings/{encoding_id:uuid}/muxings/ts/{muxing_id:uuid}",
       "mappings": [
         {
           "description": "Button for Widevine DRM",
@@ -1162,7 +1181,7 @@
     {
       "description": "Page related to a specific DRM config",
       "title": "Details of DRM ({drm_type})",
-      "url": "/encoding/encodings/{uuid}/muxings/{type}/{uuid}/drm/{drm_type:type}"
+      "url": "/encoding/encodings/{encoding_id:uuid}/muxings/{muxing_type:type}/{muxing_id:uuid}/drm/{drm_type:type}"
     },
 
     {
@@ -1341,60 +1360,19 @@
 
     {
       "description": "Page related to a specific codec configuration",
-      "title": "Details of Codec Configuration ({media_type}/{codec_type}): {codec_id}",
-      "url": "encoding/configurations/",
-      "variables": [
-        {
-          "name": "media_type",
-          "type": "url",
-          "regex": "configurations/([\\w-]+)"
-        },
-        {
-          "name": "codec_type",
-          "type": "url",
-          "regex": "configurations/[\\w-]+/([\\w-]+)/{uuid}"
-        },
-        {
-          "name": "codec_id",
-          "type": "url",
-          "regex": "configurations/[\\w-]+/[\\w-]+/({uuid})"
-        }
-      ]
+      "url": "encoding/configurations/{media_type:type}/{codec_type:type}/{codec_id:uuid}",
+      "title": "Details of Codec Configuration ({media_type}/{codec_type}): {codec_id}"
     },
 
     {
       "description": "Pages related to a specific input",
-      "title": "Details of Input ({input_type}): {input_id}",
-      "url": "/encoding/inputs/[\\w-]+/{uuid}",
-      "variables": [
-        {
-          "name": "input_type",
-          "type": "url",
-          "regex": "inputs/([\\w-]+)/{uuid}"
-        },
-        {
-          "name": "input_id",
-          "type": "url",
-          "regex": "inputs/[\\w-]+/({uuid})"
-        }
-      ]
+      "url": "/encoding/inputs/{input_type:type}/{input_id:uuid}",
+      "title": "Details of Input ({input_type}): {input_id}"
     },
     {
       "description": "Pages related to a specific output",
-      "title": "Details of Output ({output_type}): {output_id}",
-      "url": "/encoding/outputs/[\\w-]+/{uuid}",
-      "variables": [
-        {
-          "name": "output_type",
-          "type": "url",
-          "regex": "outputs/([\\w-]+)/{uuid}"
-        },
-        {
-          "name": "output_id",
-          "type": "url",
-          "regex": "outputs/[\\w-]+/({uuid})"
-        }
-      ]
+      "url": "/encoding/outputs/{output_type:type}/{output_id:uuid}",
+      "title": "Details of Output ({output_type}): {output_id}"
     },
 
     {
