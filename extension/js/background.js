@@ -92,8 +92,7 @@
         URLREGEXES = {
             'uuid': "\\w{8}-\\w{4}-\\w{4}-\\w{4}-\\w{12}",
             'type': "[\\w-]+"
-        },
-        UUID_REGEX = "(\\w{8}-\\w{4}-\\w{4}-\\w{4}-\\w{12})";
+        }
 
     // Utility functions
     function removeComments(str) {
@@ -502,6 +501,7 @@
                 if (relIndex>=0) {
                     crumbSpan = document.createElement('A');
                     crumbSpan.href = pageDecorations['related'][relIndex]['href'];
+                    pageDecorations['related'].splice(relIndex,1);
                 } else {
                     crumbSpan = document.createElement('SPAN');
                 }
@@ -514,8 +514,6 @@
                     breadcrumbs.appendChild(getSpanBoth('/','slash'));
                 }
 
-                // and finally remove that related item
-                pageDecorations['related'].splice(relIndex,1);
             });
             divPageHeader.appendChild(breadcrumbs);
 
@@ -770,7 +768,9 @@
                 var thisUrl = tabs[0].url;
 
                 var nodeDecorations = {};  // hash table of decoration objects, with application path as key
-                var pageExtracts = {};
+                var pageExtracts = {
+                    'pageUrl': thisUrl,
+                };
 
                 // we go through every relevant page definition
                 for (let pagedef of def.pages) {
@@ -788,13 +788,15 @@
                     nodeDecorations['$'] = pageRelativePath;
 
                     console.log(`Processing definition for page: ${pagedef.url}`);
-                    var context = {pageUrl: thisUrl};
+                    if (pagedef.url === '/encoding/manifests/hls/{manifest_id:uuid}/streams') {
+                        console.log("STOP")
+                    }
 
                     // we extract page variables
                     var thisPageExtracts = {};
                     if (pagedef.hasOwnProperty('variables')) {
-                        thisPageExtracts = await extractVariables(context, pagedef.variables, json);
-                        pageExtracts = Object.assign(thisPageExtracts, pageExtracts)
+                        pageExtracts = await extractVariables(pageExtracts, pagedef.variables, json);
+                        //pageExtracts = Object.assign(thisPageExtracts, pageExtracts)
                     }
 
                     // we process the page title
@@ -815,14 +817,17 @@
 
                             // we iterate through the nodes
                             for (let node of nodes) {
-                                var nodePath = jsonpath.stringify(node.path);
-
-                                // we add contextual info to the node
-                                node = Object.assign(node, context);
-
-                                // We extract (and possibly overwrite) all additional relevant variables
-                                var extracts = await extractVariables(node, mapdef.variables, json);
+                                var extracts = {};
+                                extracts = Object.assign(extracts, node);
                                 extracts = Object.assign(extracts, pageExtracts);
+
+                                var nodePath = jsonpath.stringify(node.path);
+                                extracts['jsonpath'] = nodePath;
+
+                                // We extract (and possibly overwrite) all additional relevant variables from the mapping level
+                                var mapVarExtracts = await extractVariables(extracts, mapdef.variables, json);
+                                // TODO - This could be done within the extractVariables() function really...
+                                extracts = Object.assign(extracts, mapVarExtracts);
 
                                 var targetUrl = "";
                                 if (mapdef['target'] && mapdef['target']['url']) {
@@ -838,7 +843,7 @@
                                             xhrResponse = await requestBitmovinApiURL(targetUrl);
                                         } catch (e) {
                                         }
-                                        var targetExtracts = await extractVariables(node, mapdef['target']['variables'], xhrResponse);
+                                        var targetExtracts = await extractVariables(extracts, mapdef['target']['variables'], xhrResponse);
                                         extracts = Object.assign(extracts, targetExtracts)
                                     }
                                 }
@@ -923,24 +928,14 @@
     }
 
     async function extractVariables(context, variableDefinitions, fulljson) {
-        // ... extract some variables
         var extracts = {};
-        if (context.hasOwnProperty('value')) {
-            extracts['value'] = context.value;
-        }
-        if (context.hasOwnProperty('path')) {
-            extracts['path'] = context.path;
-            extracts['jsonpath'] = jsonpath.stringify(context.path);
-        }
-
-        // some of which need extra processing
         if (variableDefinitions) {
             for (let vardef of variableDefinitions) {
                 var value;
                 switch (vardef.type) {
                     case "url":
                         // extract a component from the page URL
-                        var rx = vardef.regex.replace("{uuid}", UUID_REGEX);
+                        var rx = vardef.regex.replace("{uuid}", '(' + URLREGEXES['uuid'] + ')');
                         var res = context.pageUrl.match(rx);
                         if (res) {
                             value = res[1];
@@ -949,18 +944,18 @@
 
                     case "xhr":
                         // prepare URL to call
-                        var urltocall = resolvePlaceholders(vardef.url, extracts);
+                        var urltocall = resolvePlaceholders(vardef.url, context);
                         urltocall = createBitmovinApiURL(context.pageUrl, urltocall, false);
                         // make the call and parse the result
                         var response = await requestBitmovinApiURL(urltocall);
-                        value = jsonpath.value(response, vardef.jsonpath);
+                        value = jsonpath.value(response, resolvePlaceholders(vardef.jsonpath, context));
 
                         break;
 
                     case "sibling":
                         // extract a sibling node
                         // create a copy of the path and replace the last element
-                        var siblingpath = extracts['path'].slice();
+                        var siblingpath = context['path'].slice();
                         siblingpath.pop();
                         siblingpath.push(vardef.key);
                         siblingpath = jsonpath.stringify(siblingpath);
@@ -1017,16 +1012,22 @@
     }
 
     function createBitmovinApiURL(fromurl, path) {
-        var apikey, orgid;
+        var apikey, orgid, eid;
         // get api and org IDs
-        var res1 = fromurl.match("X-Api-Key=" + UUID_REGEX);
+        var uuidrx = '('+URLREGEXES['uuid']+')';
+        var res1 = fromurl.match("X-Api-Key=" + uuidrx);
         if (res1) {
             apikey = res1[1]
         }
 
-        var res2 = fromurl.match("X-Tenant-Org-Id=" + UUID_REGEX);
+        var res2 = fromurl.match("X-Tenant-Org-Id=" + uuidrx);
         if (res2) {
-            apikey = res2[1]
+            orgid = res2[1]
+        }
+
+        var res3 = fromurl.match("encodingId=" + uuidrx);
+        if (res3) {
+            eid = res3[1]
         }
 
         var newurl;
@@ -1043,6 +1044,10 @@
         }
         if (orgid) {
             newurl += "&X-Tenant-Org-Id=" + orgid
+        }
+        // needed because otherwise the information is lost in the manifests pages and we can't link to related encoding objects
+        if (eid && !newurl.match('encodingId=')) {
+            newurl += "&encodingId=" + eid
         }
 
         return newurl
