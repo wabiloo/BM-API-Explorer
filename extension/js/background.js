@@ -489,7 +489,34 @@
             // add breadcrumbs
             var breadcrumbs = document.createElement('DIV');
             breadcrumbs.classList.add('breadcrumbs');
-            breadcrumbs.innerText = pageDecorations.pagepath;
+            // parse it
+            var crumbs = pageDecorations.pagepath.split('/');
+
+            // we replace each with a new element
+            crumbs = crumbs.forEach(function(c, i, all) {
+                var crumbSpan = undefined;
+                // find it in the page decorations, from the related array
+                var relIndex = pageDecorations['related'].findIndex(function(r) {
+                    return r['title'] === c
+                });
+                if (relIndex>=0) {
+                    crumbSpan = document.createElement('A');
+                    crumbSpan.href = pageDecorations['related'][relIndex]['href'];
+                } else {
+                    crumbSpan = document.createElement('SPAN');
+                }
+                crumbSpan.classList.add('crumb');
+                crumbSpan.innerText = c;
+
+                // and add to the trail
+                breadcrumbs.appendChild(crumbSpan);
+                if (i < all.length-1) {
+                    breadcrumbs.appendChild(getSpanBoth('/','slash'));
+                }
+
+                // and finally remove that related item
+                pageDecorations['related'].splice(relIndex,1);
+            });
             divPageHeader.appendChild(breadcrumbs);
 
             // add related objects
@@ -551,8 +578,13 @@
                     }
                 }
 
-                var button = document.createElement('A');
-                button.href = rel['href'];
+                var button;
+                if (rel.hasOwnProperty('href')) {
+                    button = document.createElement('A');
+                    button.href = rel['href'];
+                } else {
+                    button = getSpanClass('info')
+                }
                 button.innerText = rel["title"];
 
                 // we add a suffix value if there is one
@@ -792,7 +824,7 @@
                                 var extracts = await extractVariables(node, mapdef.variables, json);
                                 extracts = Object.assign(extracts, pageExtracts);
 
-                                var targetUrl;
+                                var targetUrl = "";
                                 if (mapdef['target'] && mapdef['target']['url']) {
                                     // replace all placeholders by the extracted value
                                     var resolvedUrl = resolvePlaceholders(mapdef['target']['url'], extracts);
@@ -843,7 +875,9 @@
                                         break;
 
                                     case "related":
-                                        resolved['href'] = targetUrl;
+                                        if (targetUrl != "") {
+                                            resolved['href'] = targetUrl;
+                                        }
 
                                         // Generate a decoration
                                         deco = addBitmovinDecoration(deco, "related", resolved);
@@ -1049,6 +1083,10 @@
                 return variables['url_' + i];
             }
         });
+        // we remove other parts of regex that may remain in the case of URL patterns
+        if (type === 'url') {
+            res = res.replace(/\(.*?\)/, '');
+        }
         return res;
     }
 

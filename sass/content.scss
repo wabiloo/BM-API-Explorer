@@ -282,10 +282,9 @@ a:hover, a:active {
     }
   }
 
-  a {
+  a, .info {
     margin-left: 10px;
     padding: 2px 5px 2px 5px;
-    background: $color-extlink-back;
     border-radius: 3px;
     color: $color-text;
 
@@ -293,15 +292,22 @@ a:hover, a:active {
       font-weight: bold;
     }
   }
-  a.null {
+  a {
+    background: $color-extlink-back;
+  }
+  .null {
     background: $color-extlink-zero;
   }
-  a.error {
+  .error {
     background: $color-error;
   }
-  a.invalid {
+  .invalid {
     background: $color-extlink-zero;
     border: 1px solid $color-error;
+  }
+  .info {
+    background: transparent;
+    border: none;
   }
 
   a:hover, a:active {
