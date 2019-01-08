@@ -87,7 +87,12 @@
         TYPE_NULL = 6
         ;
 
+    // URL regexes
     var
+        URLREGEXES = {
+            'uuid': "\\w{8}-\\w{4}-\\w{4}-\\w{4}-\\w{12}",
+            'type': "[\\w-]+"
+        },
         UUID_REGEX = "(\\w{8}-\\w{4}-\\w{4}-\\w{4}-\\w{12})";
 
     // Utility functions
@@ -474,11 +479,18 @@
             var divPageHeader = document.createElement('DIV');
             divPageHeader.classList.add('jsonHeader');
 
+            // add title
             if (pageDecorations.hasOwnProperty('pagetitle')) {
                 var title = document.createElement('H1');
                 title.innerText = pageDecorations.pagetitle;
                 divPageHeader.appendChild(title);
             }
+
+            // add breadcrumbs
+            var breadcrumbs = document.createElement('DIV');
+            breadcrumbs.classList.add('breadcrumbs');
+            breadcrumbs.innerText = pageDecorations.pagepath;
+            divPageHeader.appendChild(breadcrumbs);
 
             // add related objects
             if (pageDecorations.hasOwnProperty('related')) {
@@ -517,8 +529,10 @@
 
         // we iterate through the groups to render them
         Object.keys(groups).forEach(function(k) {
+            // an element for the group of links
             var linkgroup;
             if (k !== "none") {
+                // we add a title for the group
                 linkgroup = getSpanClass('group');
                 var title = getSpanClass('title');
                 title.innerText = k;
@@ -528,25 +542,38 @@
                 linkgroup = links;
             }
 
-            // and we add the various links
+            // to which we add the various links
             for (let rel of groups[k]) {
+                if (rel.hasOwnProperty('show-if-exists')) {
+                    // skip if the value is useless
+                    if (hasNoValue(rel['show-if-exists'])) {
+                        continue;
+                    }
+                }
+
                 var button = document.createElement('A');
                 button.href = rel['href'];
                 button.innerText = rel["title"];
+
+                // we add a suffix value if there is one
                 if (rel.hasOwnProperty('suffix')) {
                     button.innerText += ": ";
                     var val = getSpanClass('suffix');
                     val.innerText = rel.suffix;
                     button.appendChild(val);
 
-                    if (rel.suffix === 'error') {
+                    // we evaluate that value to define the element's class
+                    if (rel.suffix.match('error|ERROR')) {
                         button.classList.add("error");
-                    } else if (!rel.suffix || ['0', 'undefined', 'null'].includes(rel.suffix)) {
+                    } else if (rel.suffix.match('invalid')) {
+                        button.classList.add("invalid");
+                    } else
+                        if (hasNoValue(rel.suffix)) {
                         button.classList.add("null");
                     }
-
                 }
-                // add classes to reflect
+
+                // if other classes are defined, we use them
                 if (rel.hasOwnProperty('classname')) {
                     button.classList.add(rel.classname)
                 }
@@ -554,6 +581,53 @@
             }
         });
         return links
+    }
+
+    /*console.log(isMatchingUrl(
+        "/fdhjfhs/d17b22c0-a1e7-418a-a19d-92dd6a6328af/fdfs/d17b22c0-a1e7-418a-a19d-92dd6a6328af/fmp4/{t}",
+        "/fdhjfhs/{stra:uuid}/{gla:type}/{bla:uuid}/{type}/.*"));
+    */
+    function isMatchingUrl(thisUrl, candidate) {
+        var varnames = [];
+        // extract variable placeholders and replace them to create a full regex
+        var rx = candidate.replace(/({((\w+?):)?(\w+)})/g, function(n, p1, p2, p3, p4) {
+            // each extracted placeholder can have multiple names
+            var names = ["url_" + varnames.length];
+            if (p3) {
+                names.push(p3);
+            }
+            varnames.push(names);
+
+            // and we replace it with the appropriate sub-regex
+            if (URLREGEXES[p4]) {
+                return "(" + URLREGEXES[p4] + ")";
+            } else {
+                return n
+            }
+        });
+
+        // test the Regex on the URL
+        var mat = thisUrl.match(new RegExp(rx));
+
+        if (!mat) {
+            return null
+        } else {
+            // assign variable values
+            var variables = {};
+            for (let i=0; i < varnames.length; i++) {
+                if (varnames[i]) {
+                    // it's an array of names
+                    for (let n of varnames[i]) {
+                        variables[n] = mat[i+1]
+                    }
+                }
+            }
+            return variables;
+        }
+    }
+
+    function hasNoValue(str) {
+        return ['0', 'undefined', 'null', 'false', "", '[]'].includes(str);
     }
 
     function copy(value) {
@@ -661,155 +735,156 @@
 
             // find relevant URL
             chrome.tabs.query({currentWindow: true, active: true}, async function (tabs) {
-                var thisurl = tabs[0].url;
+                var thisUrl = tabs[0].url;
 
-                // find parts of the definition that apply to the current URL
-                var pagedefs = def.pages.filter(function(p) {
-                    // we replace the "{uuid}" placeholders by proper UUID regex
-                    return thisurl.match(p.url.replace(/\{uuid\}/g, UUID_REGEX))
-                });
+                var nodeDecorations = {};  // hash table of decoration objects, with application path as key
+                var pageExtracts = {};
 
-                if (pagedefs.length === 0) {
-                    console.log(`No mapping definition found for the current URL '${thisurl}'`);
-                    callback(json);
-                    return false;
-                } else {
-                    var nodeDecorations = {};  // hash table of decoration objects, with application path as key
-                    var pageExtracts = {};
+                // we go through every relevant page definition
+                for (let pagedef of def.pages) {
+                    // test the URL and return extracted variables
+                    var thisUrlExtracts = isMatchingUrl(thisUrl, pagedef.url);
+                    if (!thisUrlExtracts) {
+                        continue;
+                    }
+                    pageExtracts = Object.assign(thisUrlExtracts, pageExtracts);
 
-                    // we go through every relevant page definition
-                    for (let pagedef of pagedefs) {
-                        console.log(`Processing definition for page: ${pagedef.url}`);
-                        var context = { pageUrl: thisurl };
+                    // record it for later
+                    var pageRelativePath = nodeDecorations['$'] || getBitmovinDecoration();
+                    var path = resolvePlaceholders(pagedef.url, pageExtracts, 'url');
+                    pageRelativePath = addBitmovinDecoration(pageRelativePath, 'pagepath', path);
+                    nodeDecorations['$'] = pageRelativePath;
 
-                        // we extract page variables
-                        var thisPageExtracts = {};
-                        if (pagedef.hasOwnProperty('variables')) {
-                            thisPageExtracts = await extractVariables(context, pagedef.variables, json);
-                            pageExtracts = Object.assign(thisPageExtracts, pageExtracts)
-                        }
+                    console.log(`Processing definition for page: ${pagedef.url}`);
+                    var context = {pageUrl: thisUrl};
 
-                        // we process the page title
-                        if (pagedef.hasOwnProperty('title')) {
-                            var pagetitle = nodeDecorations['$'] || getBitmovinDecoration();
-                            var title = resolvePlaceholders(pagedef.title, pageExtracts);
-                            pagetitle = addBitmovinDecoration(pagetitle, 'pagetitle', title);
-                            nodeDecorations['$'] = pagetitle;
-                        }
+                    // we extract page variables
+                    var thisPageExtracts = {};
+                    if (pagedef.hasOwnProperty('variables')) {
+                        thisPageExtracts = await extractVariables(context, pagedef.variables, json);
+                        pageExtracts = Object.assign(thisPageExtracts, pageExtracts)
+                    }
 
-                        // from this, there are 1 or more re-mappings to perform
-                        if (pagedef.hasOwnProperty('mappings')) {
-                            for (let mapdef of pagedef.mappings) {
-                                console.log(`Processing re-mapping: ${mapdef.description}`);
+                    // we process the page title
+                    if (pagedef.hasOwnProperty('title')) {
+                        var pagetitle = nodeDecorations['$'] || getBitmovinDecoration();
+                        var title = resolvePlaceholders(pagedef.title, pageExtracts);
+                        pagetitle = addBitmovinDecoration(pagetitle, 'pagetitle', title);
+                        nodeDecorations['$'] = pagetitle;
+                    }
 
-                                // we use JSON path to find relevant nodes in the JSON payload
-                                var nodes = jsonpath.nodes(json, mapdef.jsonpath);
+                    // from this, there are 1 or more re-mappings to perform
+                    if (pagedef.hasOwnProperty('mappings')) {
+                        for (let mapdef of pagedef.mappings) {
+                            console.log(`Processing re-mapping: ${mapdef.description}`);
 
-                                // we iterate through the nodes
-                                for (let node of nodes) {
-                                    var nodePath = jsonpath.stringify(node.path);
+                            // we use JSON path to find relevant nodes in the JSON payload
+                            var nodes = jsonpath.nodes(json, mapdef.jsonpath);
 
-                                    // we add contextual info to the node
-                                    node = Object.assign(node, context);
+                            // we iterate through the nodes
+                            for (let node of nodes) {
+                                var nodePath = jsonpath.stringify(node.path);
 
-                                    // We extract (and possibly overwrite) all additional relevant variables
-                                    var extracts = await extractVariables(node, mapdef.variables, json);
-                                    extracts = Object.assign(extracts, pageExtracts);
+                                // we add contextual info to the node
+                                node = Object.assign(node, context);
 
-                                    var targetUrl;
-                                    if (mapdef['target'] && mapdef['target']['url']) {
-                                        // replace all placeholders by the extracted value
-                                        var resolvedUrl = resolvePlaceholders(mapdef['target']['url'], extracts);
-                                        targetUrl = createBitmovinApiURL(thisurl, resolvedUrl, false);
+                                // We extract (and possibly overwrite) all additional relevant variables
+                                var extracts = await extractVariables(node, mapdef.variables, json);
+                                extracts = Object.assign(extracts, pageExtracts);
 
-                                        // some variables may have to be extracted from the target URL
-                                        var xhrResponse = {};
-                                        if (makeXhrCalls && mapdef['target']['variables']) {
-                                            try {
-                                                // Pre-request the URL
-                                                xhrResponse = await requestBitmovinApiURL(targetUrl);
-                                                var targetExtracts = await extractVariables(node, mapdef['target']['variables'], xhrResponse);
-                                                extracts = Object.assign(extracts, targetExtracts)
-                                            } catch (e) {
-                                            }
+                                var targetUrl;
+                                if (mapdef['target'] && mapdef['target']['url']) {
+                                    // replace all placeholders by the extracted value
+                                    var resolvedUrl = resolvePlaceholders(mapdef['target']['url'], extracts);
+                                    targetUrl = createBitmovinApiURL(thisUrl, resolvedUrl, false);
+
+                                    // some variables may have to be extracted from the target URL
+                                    var xhrResponse = {};
+                                    if (makeXhrCalls && mapdef['target']['variables']) {
+                                        try {
+                                            // Pre-request the URL
+                                            xhrResponse = await requestBitmovinApiURL(targetUrl);
+                                        } catch (e) {
                                         }
+                                        var targetExtracts = await extractVariables(node, mapdef['target']['variables'], xhrResponse);
+                                        extracts = Object.assign(extracts, targetExtracts)
                                     }
-
-                                    // Generate the decoration
-                                    // we find or generate a decoration template
-                                    var deco;
-                                    if (nodeDecorations.hasOwnProperty(nodePath)) {
-                                        deco = nodeDecorations[nodePath];
-                                    } else {
-                                        deco = getBitmovinDecoration(extracts['value']);
-                                    }
-
-                                    // ... and add the relevant decorations
-                                    var resolved = {};
-                                    if (mapdef.title) {
-                                        resolved['title'] = resolvePlaceholders(mapdef.title, extracts)
-                                    }
-                                    if (mapdef.group) {
-                                        resolved['group'] = mapdef.group
-                                    }
-
-                                    // add other decorations based on the type defined
-                                    switch (mapdef.type) {
-                                        case "href":
-                                            deco = addBitmovinDecoration(deco, "href", targetUrl);
-                                            break;
-
-                                        case "related":
-                                            resolved['href'] = targetUrl;
-
-                                            var resolvedSuffix;
-                                            if (mapdef['presentation']) {
-                                                if (mapdef['presentation']['suffix']) {
-                                                    resolved['suffix'] = resolvePlaceholders(mapdef['presentation']['suffix'], extracts)
-                                                }
-                                            }
-
-                                            // Generate a decoration
-                                            deco = addBitmovinDecoration(deco, "related", resolved);
-                                            break;
-
-                                        case "highlight":
-                                            deco = addBitmovinDecoration(deco, "cssclass", mapdef['classname']);
-                                    }
-
-                                    // and we add the decoration to the dictionary, with the path being the key
-                                    nodeDecorations[jsonpath.stringify(node.path)] = deco;
-
                                 }
+
+                                // Generate the decoration
+                                // we find or generate a decoration template
+                                var deco;
+                                if (nodeDecorations.hasOwnProperty(nodePath)) {
+                                    deco = nodeDecorations[nodePath];
+                                } else {
+                                    deco = getBitmovinDecoration(extracts['value']);
+                                }
+
+                                // ... and add the relevant decorations
+                                var resolved = {};
+                                if (mapdef.title) {
+                                    resolved['title'] = resolvePlaceholders(mapdef.title, extracts)
+                                }
+                                if (mapdef.group) {
+                                    resolved['group'] = mapdef.group
+                                }
+
+                                // ... and add any presentation information
+                                if (mapdef['presentation']) {
+                                    Object.keys(mapdef['presentation']).forEach(function (p) {
+                                        resolved[p] = resolvePlaceholders(mapdef['presentation'][p], extracts)
+                                    })
+                                }
+
+                                // add other decorations based on the type defined
+                                switch (mapdef.type) {
+                                    case "href":
+                                        deco = addBitmovinDecoration(deco, "href", targetUrl);
+                                        break;
+
+                                    case "related":
+                                        resolved['href'] = targetUrl;
+
+                                        // Generate a decoration
+                                        deco = addBitmovinDecoration(deco, "related", resolved);
+                                        break;
+
+                                    case "highlight":
+                                        deco = addBitmovinDecoration(deco, "cssclass", resolved);
+                                }
+
+                                // and we add the decoration to the dictionary, with the path being the key
+                                nodeDecorations[jsonpath.stringify(node.path)] = deco;
+
                             }
                         }
-                    } // end of pagedef processing
+                    }
+                } // end of pagedef processing
 
-                    // When all is done, we apply all the decorations to the JSON node
-                    console.log("Decorations:", nodeDecorations);
+                // When all is done, we apply all the decorations to the JSON node
+                console.log("Decorations:", nodeDecorations);
 
-                    // Needs to apply from trees to root (most specific first) to avoid overwrites
-                    // that would invalidate JSON paths
-                    var paths = Object.keys(nodeDecorations);
-                    paths = paths.sort(function(p1, p2) {
-                        return (jsonpath.parse(p2).length - jsonpath.parse(p1).length);
-                    });
-                    console.log("Order of application:", paths);
+                // Needs to apply from trees to root (most specific first) to avoid overwrites
+                // that would invalidate JSON paths
+                var paths = Object.keys(nodeDecorations);
+                paths = paths.sort(function (p1, p2) {
+                    return (jsonpath.parse(p2).length - jsonpath.parse(p1).length);
+                });
+                console.log("Order of application:", paths);
 
-                    paths.forEach(function(p) {
-                        // special treatment for root, due to bug in jsonpath and not wanting to modify the root object
-                        if (p === '$') {
-                            json['__bmPageDecorations'] = nodeDecorations[p]
-                        } else {
-                            jsonpath.value(json, p, {'bmDecorations': nodeDecorations[p]});
-                        }
-                    });
+                paths.forEach(function (p) {
+                    // special treatment for root, due to bug in jsonpath and not wanting to modify the root object
+                    if (p === '$') {
+                        json['__bmPageDecorations'] = nodeDecorations[p]
+                    } else {
+                        jsonpath.value(json, p, {'bmDecorations': nodeDecorations[p]});
+                    }
+                });
 
-                    callback(json);
+                callback(json);
 
-                    return true;
-                }
-            });
+                return true;
+            })
         })
     }
 
@@ -898,7 +973,7 @@
                 break;
 
             case "cssclass":
-                deco['classnames'].push(info);
+                deco['classnames'].push(info.highlight);
                 break;
 
             default:
@@ -959,11 +1034,22 @@
         })
     }
 
-    function resolvePlaceholders(string, variables) {
-        return string.replace(/\{\w+\}/g, function(match) {
+    function resolvePlaceholders(string, variables, type) {
+        /*return string.replace(/\{\w+\}/g, function(match) {
             var varname = match.substr(1, match.length-2);
             return variables[varname]
+        });*/
+        var i = -1;
+        var res = string.replace(/({(\w+?)(:(\w+))?})/g, function(n, p1, p2, p3, p4) {
+            i++;
+            var varname = p2;
+            if (variables.hasOwnProperty(varname)) {
+                return variables[varname]
+            } else if (type === 'url'){
+                return variables['url_' + i];
+            }
         });
+        return res;
     }
 
     function reformatValues(value, method) {
@@ -990,11 +1076,20 @@
                     return value
                 } else {
                     try {
-                        value = value.length
-                    } catch (e) {}
-                    return value
+                        return value.length
+                    } catch (e) {
+                        return 'invalid'
+                    }
                 }
                 break;
+
+            case "boolean": {
+                if (value) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
         }
     }
 

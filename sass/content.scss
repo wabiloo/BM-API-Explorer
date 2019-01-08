@@ -299,6 +299,10 @@ a:hover, a:active {
   a.error {
     background: $color-error;
   }
+  a.invalid {
+    background: $color-extlink-zero;
+    border: 1px solid $color-error;
+  }
 
   a:hover, a:active {
     background: $color-url-hover;
@@ -307,8 +311,12 @@ a:hover, a:active {
 }
 .jsonHeader {
   padding: 1px;
+  padding-left: 15px;
   background-color: $color-bg-header;
 
+  .breadcrumbs {
+    font-family: monospace;
+  }
   .headerLinks {
     margin-top: 10px;
     margin-bottom: 10px;
@@ -316,13 +324,12 @@ a:hover, a:active {
     .group {
       display: block;
       border: none;
-      margin: 5px 0 0 12px;
+      margin-top: 5px;
     }
   }
   h1 {
     font-size: large;
     font-family: sans-serif;
-    padding-left: 15px;
   }
 }
 
