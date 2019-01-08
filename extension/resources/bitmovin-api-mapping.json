@@ -1185,13 +1185,14 @@
     },
 
     {
-      "description": "Pages related to manifests",
-      "url": "/encoding/manifests",
+      "description": "Pages related to manifests of a particular type",
+      "url": "/encoding/manifests/{manifest_type:type}",
+      "title": "List of {manifest_type} manifests",
       "mappings": [
         {
           "description": "Link to individual manifest object",
           "type": "href",
-          "jsonpath": "$.data.result.items[*].id",
+          "jsonpath": "$.data.result.items[?(@.type)].id",
           "variables": [
             {
               "name": "manifest_type",
@@ -1219,14 +1220,8 @@
     },
     {
       "description": "Pages related to manifests for a specific encoding",
-      "url": "/encoding/manifests.*encodingId=",
-      "variables": [
-        {
-          "name": "encoding_id",
-          "type": "url",
-          "regex": "encodingId=({uuid})"
-        }
-      ],
+      "url": "/encoding/manifests/{manifest_type:type}?.*encodingId={encoding_id:uuid}",
+      "title": "List of {manifest_type} manifests for Encoding {encoding_id}",
       "mappings": [
         {
           "description": "Encoding object",
@@ -1250,10 +1245,111 @@
         }
       ]
     },
+
     {
-      "title": "THIS is a page about manifests",
+      "description": "Pages related to a specific HLS manifest",
+      "url": "/encoding/manifests/hls/{manifest_id:uuid}",
+      "title": "Details of HLS Manifest {manifest_id}",
+      "mappings": [
+        {
+          "description": "HLS manifest",
+          "type": "related",
+          "title": "{manifest_id}",
+          "group": "hls",
+          "jsonpath": "$",
+          "target": {
+            "url": "/encoding/manifests/hls/{manifest_id}"
+          }
+        },
+        {
+          "description": "Variant streams",
+          "type": "related",
+          "title": "Variant Streams",
+          "group": "hls",
+          "jsonpath": "$",
+          "target": {
+            "url": "/encoding/manifests/hls/{manifest_id}/streams",
+            "variables": [
+              {
+                "name": "count",
+                "type": "jsonpath",
+                "jsonpath": "$.data.result.totalCount",
+                "transformation": "count"
+              }
+            ]
+          },
+          "presentation": {
+            "suffix": "{count}"
+          }
+        },
+        {
+          "description": "Manifest Status",
+          "type": "related",
+          "title": "Status",
+          "group": "hls",
+          "jsonpath": "$",
+          "target": {
+            "url": "/encoding/manifests/hls/{manifest_id}/status",
+            "variables": [
+              {
+                "name": "status",
+                "type": "jsonpath",
+                "jsonpath": "$.data.result.status"
+              }
+            ]
+          },
+          "presentation": {
+            "suffix": "{status}"
+          }
+        }
+
+      ]
+    },
+    {
+      "description": "Pages listing HLS Variant Stream",
+      "url": "/encoding/manifests/hls/{manifest_id:uuid}/streams",
+      "title": "List of Variant Stream for HLS Manifest {manifest_id}",
+      "mappings": [
+        {
+          "description": "Link to individual variant stream object",
+          "type": "href",
+          "jsonpath": "$.data.result.items[?(@.uri)].id",
+          "target": {
+            "url": "/encoding/manifests/hls/{manifest_id}/streams/{value}"
+          }
+        },
+        {
+          "description": "Link to individual stream object",
+          "type": "href",
+          "jsonpath": "$.data.result.items[?(@.uri)].streamId",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/streams/{value}"
+          }
+        },
+        {
+          "description": "Link to individual muxing object - NOT POSSIBLE TO LOOKUP MUXING TYPE FROM MUXING_ID",
+          "type": "href",
+          "jsonpath": "$.data.result.items[?(@.uri)].muxingId",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{value}"
+          },
+          "variables": [
+            {
+              "name": "muxing_type",
+              "type": "xhr",
+              "url": "/encoding/encodings/{encoding_id}/muxings",
+              "jsonpath": "$..items[?(@.id=='{value}')].type",
+              "transformation": "lowerCase"
+            }
+          ]
+        }
+
+      ]
+    },
+    {
       "description": "Pages listing DASH manifests",
       "url": "/encoding/manifests/dash/{uuid}",
+      "title": "THIS is a page about manifests",
       "variables": [
         {
           "name": "manifest_id",
@@ -1361,18 +1457,54 @@
     {
       "description": "Page related to a specific codec configuration",
       "url": "encoding/configurations/{media_type:type}/{codec_type:type}/{codec_id:uuid}",
-      "title": "Details of Codec Configuration ({media_type}/{codec_type}): {codec_id}"
+      "title": "Details of Codec Configuration ({media_type}/{codec_type}): {codec_id}",
+      "mappings": [
+        {
+          "description": "Codec Configuration object",
+          "type": "related",
+          "title": "{codec_id}",
+          "jsonpath": "$",
+          "target": {
+            "url": "/encoding/configurations/{media_type}/{codec_type}/{codec_id}"
+          },
+          "group": "codec"
+        }
+      ]
     },
 
     {
       "description": "Pages related to a specific input",
       "url": "/encoding/inputs/{input_type:type}/{input_id:uuid}",
-      "title": "Details of Input ({input_type}): {input_id}"
+      "title": "Details of Input ({input_type}): {input_id}",
+      "mappings": [
+        {
+          "description": "Input object",
+          "type": "related",
+          "title": "{input_id}",
+          "jsonpath": "$",
+          "target": {
+            "url": "/encoding/inputs/{input_type}/{input_id}"
+          },
+          "group": "input"
+        }
+      ]
     },
     {
       "description": "Pages related to a specific output",
       "url": "/encoding/outputs/{output_type:type}/{output_id:uuid}",
-      "title": "Details of Output ({output_type}): {output_id}"
+      "title": "Details of Output ({output_type}): {output_id}",
+      "mappings": [
+        {
+          "description": "Output object",
+          "type": "related",
+          "title": "{output_id}",
+          "jsonpath": "$",
+          "target": {
+            "url": "/encoding/inputs/{output_type}/{output_id}"
+          },
+          "group": "output"
+        }
+      ]
     },
 
     {
