@@ -756,7 +756,7 @@
         xobj.send(null);
     }
 
-    function decorateBitmovinJson(json, callback) {
+    function decorateBitmovinJson(json, port, callback) {
         var makeXhrCalls = localStorage.getItem('makeRelatedXhrCalls') || false;
 
         loadBitmovinApiJSON(function(definition) {
@@ -788,6 +788,7 @@
                     nodeDecorations['$'] = pageRelativePath;
 
                     console.log(`Processing definition for page: ${pagedef.url}`);
+                    port.postMessage(['DECORATING', `Processing definition for page: ${pagedef.url}`]);
                     if (pagedef.url === '/encoding/manifests/hls/{manifest_id:uuid}/streams') {
                         console.log("STOP")
                     }
@@ -810,6 +811,7 @@
                     // from this, there are 1 or more re-mappings to perform
                     if (pagedef.hasOwnProperty('mappings')) {
                         for (let mapdef of pagedef.mappings) {
+                            port.postMessage(['DECORATING', ` - Processing re-mapping: ${mapdef.description}`]);
                             console.log(`Processing re-mapping: ${mapdef.description}`);
 
                             // we use JSON path to find relevant nodes in the JSON payload
@@ -1259,7 +1261,7 @@
 
                 // Decorate the JSON response with Bitmovin API specific information
                 window.undecoratedJSON = obj;
-                decorateBitmovinJson(obj, function(newobj) {
+                decorateBitmovinJson(obj, port, function(newobj) {
                     window.decoratedJSON = newobj;
 
                     // Do formatting

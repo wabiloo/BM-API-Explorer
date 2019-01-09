@@ -244,6 +244,13 @@
 
                     break;
 
+                case 'DECORATING' :
+                    var formattingMsg = document.getElementById('formattingMsg');
+                    var log = document.createElement('DIV');
+                    log.innerText = msg[1];
+                    formattingMsg.appendChild(log);
+                    break;
+
                 case 'FORMATTED' :
 
                     var localStorageOptions = JSON.parse(msg[3]);
