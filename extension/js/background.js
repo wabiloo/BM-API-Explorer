@@ -30,6 +30,7 @@
         path,
         numChildClasses,
         pageDecorations,
+        xhrCache = {},
         fns = {
             copyPath: function () {
                 copy(path)
@@ -930,7 +931,7 @@
     }
 
     async function extractVariables(context, variableDefinitions, fulljson) {
-        var extracts = {};
+        // var extracts = {};
         if (variableDefinitions) {
             for (let vardef of variableDefinitions) {
                 var value;
@@ -974,10 +975,11 @@
                 if (vardef.transformation) {
                     value = reformatValues(value, vardef.transformation)
                 }
-                extracts[vardef.name] = value;
+                // extracts[vardef.name] = value;
+                context[vardef.name] = value;
             }
         }
-        return extracts
+        return context
     }
 
     function getBitmovinDecoration(actualValue) {
@@ -1057,10 +1059,18 @@
 
     function requestBitmovinApiURL(url) {
         return new Promise(function(resolve, reject) {
+            // see if it exists in the cache first
+            if (xhrCache.hasOwnProperty(url)) {
+                resolve(xhrCache[url])
+                return;
+            }
+
             const xhr = new XMLHttpRequest();
             xhr.onreadystatechange = function(e) {
                 if (xhr.readyState === 4) {
                     if (xhr.status === 200) {
+                        var response = JSON.parse(xhr.response);
+                        xhrCache[url] = response;
                         resolve(JSON.parse(xhr.response))
                     } else {
                         reject(xhr.status)
@@ -1100,8 +1110,12 @@
     function reformatValues(value, method) {
         switch (method) {
             case "lowerCase":
-                value = value.toLowerCase();
-                return value.replace(/_/g,'-');
+                if (value) {
+                    value = value.toLowerCase();
+                    return value.replace(/_/g,'-');
+                } else {
+                    return value;
+                }
                 break;
 
             case "codecType":

@@ -1327,7 +1327,69 @@
           }
         },
         {
-          "description": "Link to individual muxing object - NOT POSSIBLE TO LOOKUP MUXING TYPE FROM MUXING_ID",
+          "description": "Bitrate info to individual stream object",
+          "type": "related",
+          "jsonpath": "$.data.result.items[?(@.uri)].streamId",
+          "group": "codec",
+          "variables": [
+            {
+              "name": "codec_id",
+              "type": "xhr",
+              "url": "/encoding/encodings/{encoding_id}/streams/{value}",
+              "jsonpath": "$.data.result.codecConfigId"
+            },
+            {
+              "name": "codec_type",
+              "type": "xhr",
+              "url": "/encoding/configurations/{codec_id}/type",
+              "jsonpath": "$.data.result.type",
+              "transformation": "codecType"
+            },
+            {
+              "name": "bitrate",
+              "type": "xhr",
+              "url": "/encoding/configurations/{codec_type}/{codec_id}",
+              "jsonpath": "$.data.result.bitrate"
+            }
+          ],
+          "presentation": {
+            "title": "bitrate",
+            "suffix": "{bitrate}"
+          }
+        },
+        {
+          "description": "Height info to individual stream object",
+          "type": "related",
+          "jsonpath": "$.data.result.items[?(@.uri)].streamId",
+          "group": "codec",
+          "variables": [
+            {
+              "name": "codec_id",
+              "type": "xhr",
+              "url": "/encoding/encodings/{encoding_id}/streams/{value}",
+              "jsonpath": "$.data.result.codecConfigId"
+            },
+            {
+              "name": "codec_type",
+              "type": "xhr",
+              "url": "/encoding/configurations/{codec_id}/type",
+              "jsonpath": "$.data.result.type",
+              "transformation": "codecType"
+            },
+            {
+              "name": "height",
+              "type": "xhr",
+              "url": "/encoding/configurations/{codec_type}/{codec_id}",
+              "jsonpath": "$.data.result.height"
+            }
+          ],
+          "presentation": {
+            "title": "height",
+            "suffix": "{height}"
+          }
+        },
+        {
+          "description": "Link to individual muxing object",
           "type": "href",
           "jsonpath": "$.data.result.items[?(@.uri)].muxingId",
           "target": {
@@ -1342,6 +1404,25 @@
               "transformation": "lowerCase"
             }
           ]
+        },
+        {
+          "description": "Type info to individual muxing object",
+          "type": "related",
+          "jsonpath": "$.data.result.items[?(@.uri)].muxingId",
+          "group": "muxing",
+          "variables": [
+            {
+              "name": "muxing_type",
+              "type": "xhr",
+              "url": "/encoding/encodings/{encoding_id}/muxings",
+              "jsonpath": "$..items[?(@.id=='{value}')].type",
+              "transformation": "lowerCase"
+            }
+          ],
+          "presentation": {
+            "title": "type",
+            "suffix": "{muxing_type}"
+          }
         }
 
       ]
