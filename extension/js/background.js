@@ -364,6 +364,13 @@
                     dObj.appendChild(templates.t_ellipsis.cloneNode(false));
                     // Create blockInner, which indents (don't attach yet)
                     blockInner = templates.t_blockInner.cloneNode(false);
+
+                    // add any decoration to the inner block
+                    // TODO - won't always work - sometimes we may want them on the outside
+                    if (decorations && decorations.hasOwnProperty('classnames-inner')) {
+                        blockInner.classList.add.apply(blockInner.classList, decorations['classnames-inner']);
+                    }
+
                     // For each key/value pair, add as a dObj to blockInner
                     var count = 0, k, comma;
                     for (k in value) {
@@ -385,6 +392,12 @@
 
                 // Add closing brace
                 dObj.appendChild(templates.t_cBrace.cloneNode(true));
+
+                // and add decoration
+                if (decorations && decorations.hasOwnProperty('classnames')) {
+                    dObj.classList.add.apply(dObj.classList, decorations['classnames']);
+                }
+
                 break;
 
             case TYPE_ARRAY:
@@ -984,8 +997,7 @@
 
     function getBitmovinDecoration(actualValue) {
         var deco = {
-            "related": [],
-            "classnames": []
+            "related": []
         };
         if (actualValue) {
             // pass the actual value down
@@ -1006,7 +1018,15 @@
                 break;
 
             case "cssclass":
-                deco['classnames'].push(info.highlight);
+                var key = 'classnames';
+                if (info.hasOwnProperty('highlight-scope')) {
+                    key += "-" + info["highlight-scope"];
+                }
+                if (!deco.hasOwnProperty(key)) {
+                    deco[key] = [];
+                }
+
+                deco[key].push(info.highlight);
                 break;
 
             default:

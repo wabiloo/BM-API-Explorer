@@ -12,6 +12,8 @@ $color-extlink-zero: #d4d2d2;
 $color-bg-identifier: lightgoldenrodyellow;
 $color-error: red;
 $color-bg-header: #EBF4F8;
+$color-bg-item: #EEEEEE;
+$color-bg-group: #fefff2;
 
 body {
   -webkit-user-select: text;
@@ -265,6 +267,9 @@ a:hover, a:active {
 .error {
   color: $color-error;
 }
+.item {
+  background: $color-bg-item;
+}
 
 .links {
   font-family: sans-serif;
@@ -275,6 +280,7 @@ a:hover, a:active {
     padding: 4px;
     border: 1px solid lightgrey;
     border-radius: 5px;
+    background: $color-bg-group;
 
     .title {
       text-transform: uppercase;
@@ -331,6 +337,7 @@ a:hover, a:active {
       display: block;
       border: none;
       margin-top: 5px;
+      background: transparent;
     }
   }
   h1 {

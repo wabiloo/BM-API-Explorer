@@ -47,6 +47,26 @@
         },
 
         {
+          "description": "Background of items in list",
+          "type": "highlight",
+          "jsonpath": "$..items[*]",
+          "presentation": {
+            "highlight": "item",
+            "highlight-scope": "inner"
+          }
+        },
+        {
+          "description": "Background of single item",
+          "type": "highlight",
+          "jsonpath": "$.data[?(@.id)]",
+          "presentation": {
+            "highlight": "item",
+            "highlight-scope": "inner"
+          }
+        },
+
+
+        {
           "description": "Link to input objects",
           "type": "href",
           "jsonpath": "$..inputId",
@@ -125,6 +145,111 @@
           },
           "presentation": {
             "suffix": "{status}"
+          }
+        },
+        {
+          "description": "Encoding input streams - ingest",
+          "type": "related",
+          "title": "Ingest",
+          "group": "input streams",
+          "jsonpath": "$",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/input-streams/ingest",
+            "variables": [
+              {
+                "name": "count",
+                "type": "jsonpath",
+                "jsonpath": "$.data.result.totalCount",
+                "transformation": "count"
+              }
+            ]
+          },
+          "presentation": {
+            "suffix": "{count}"
+          }
+        },
+        {
+          "description": "Encoding input streams - trimming time-based",
+          "type": "related",
+          "title": "Trimming - Time",
+          "group": "input streams",
+          "jsonpath": "$",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/input-streams/trimming/time-based",
+            "variables": [
+              {
+                "name": "count",
+                "type": "jsonpath",
+                "jsonpath": "$.data.result.totalCount",
+                "transformation": "count"
+              }
+            ]
+          },
+          "presentation": {
+            "suffix": "{count}"
+          }
+        },
+        {
+          "description": "Encoding input streams - trimming timecode-based",
+          "type": "related",
+          "title": "Trimming - Timecode",
+          "group": "input streams",
+          "jsonpath": "$",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/input-streams/trimming/timecode-track",
+            "variables": [
+              {
+                "name": "count",
+                "type": "jsonpath",
+                "jsonpath": "$.data.result.totalCount",
+                "transformation": "count"
+              }
+            ]
+          },
+          "presentation": {
+            "suffix": "{count}"
+          }
+        },
+        {
+          "description": "Encoding input streams - H264 picture-based",
+          "type": "related",
+          "title": "Trimming - H264 Picture",
+          "group": "input streams",
+          "jsonpath": "$",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/input-streams/trimming/h264-picture-timing",
+            "variables": [
+              {
+                "name": "count",
+                "type": "jsonpath",
+                "jsonpath": "$.data.result.totalCount",
+                "transformation": "count"
+              }
+            ]
+          },
+          "presentation": {
+            "suffix": "{count}"
+          }
+        },
+        {
+          "description": "Encoding input streams - concatenation",
+          "type": "related",
+          "title": "Concatenation",
+          "group": "input streams",
+          "jsonpath": "$",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/input-streams/concatenation",
+            "variables": [
+              {
+                "name": "count",
+                "type": "jsonpath",
+                "jsonpath": "$.data.result.totalCount",
+                "transformation": "count"
+              }
+            ]
+          },
+          "presentation": {
+            "suffix": "{count}"
           }
         },
         {
