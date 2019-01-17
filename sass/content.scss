@@ -13,7 +13,9 @@ $color-bg-identifier: lightgoldenrodyellow;
 $color-error: red;
 $color-bg-header: #EBF4F8;
 $color-bg-item: #EEEEEE;
+$color-border-item: darkgrey;
 $color-bg-group: #fefff2;
+$color-ignored: orange;
 
 body {
   -webkit-user-select: text;
@@ -261,14 +263,18 @@ a:hover, a:active {
 }
 
 .identifier {
-  font-weight: bold;
-  background: $color-bg-identifier
+  border-bottom: 2px solid $color-border-item;
 }
 .error {
   color: $color-error;
 }
 .item {
+  border-left: 3px solid $color-border-item;
   background: $color-bg-item;
+}
+
+.item.ignored {
+  border-left: 3px dashed $color-ignored;
 }
 
 .links {

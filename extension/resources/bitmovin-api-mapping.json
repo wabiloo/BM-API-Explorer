@@ -473,6 +473,31 @@
         {
           "description": "Info of type for codec configuration objects",
           "type": "related",
+          "title": "name",
+          "jsonpath": "$..codecConfigId",
+          "group": "codec",
+          "variables": [
+            {
+              "name": "type",
+              "type": "xhr",
+              "url": "/encoding/configurations/{value}/type",
+              "jsonpath": "$.data.result.type",
+              "transformation": "codecType"
+            },
+            {
+              "name": "codecname",
+              "type": "xhr",
+              "url": "/encoding/configurations/{type}/{value}",
+              "jsonpath": "$.data.result.name"
+            }
+          ],
+          "presentation": {
+            "suffix": "{codecname}"
+          }
+        },
+        {
+          "description": "Info of name for codec configuration objects",
+          "type": "related",
           "title": "type",
           "jsonpath": "$..codecConfigId",
           "group": "codec",
@@ -561,7 +586,17 @@
           "presentation": {
             "suffix": "{count}"
           }
+        },
+        {
+          "description": "Border of ignored items",
+          "type": "highlight",
+          "jsonpath": "$.data.result..[?(@.ignoredBy)]",
+          "presentation": {
+            "highlight": "ignored",
+            "highlight-scope": "inner"
+          }
         }
+
       ]
     },
     {
@@ -686,18 +721,10 @@
     },
 
     {
-      "description": "Page for list of encoding muxings",
+      "description": "List of muxings",
       "title": "List of Muxings",
       "url": "/encoding/encodings/{encoding_id:uuid}/muxings(?!\/)",
       "mappings": [
-        {
-          "description": "Link to stream objects",
-          "type": "href",
-          "jsonpath": "$..streamId",
-          "target": {
-            "url": "/encoding/encodings/{encoding_id}/streams/{value}"
-          }
-        },
         {
           "description": "Link to individual muxing objects in list",
           "type": "href",
@@ -712,6 +739,76 @@
           ],
           "target": {
             "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{value}"
+          }
+        }
+      ]
+    },
+    {
+      "description": "Pages related to a specific muxing",
+      "url": "/encoding/encodings/{encoding_id:uuid}/muxings/{muxing_type:type}/{muxing_id:uuid}",
+      "title": "Details of Muxing ({muxing_type}): {muxing_id}",
+      "mappings": [
+        {
+          "description": "Button for Muxing object",
+          "type": "related",
+          "title": "{muxing_id}",
+          "jsonpath": "$",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}"
+          },
+          "group": "muxing"
+        }
+      ]
+    },
+    {
+      "description": "Any page related to muxings",
+      "comment": "MUST be after the other ones as needs muxing_type variable to have been determined, which is different between list and individual muxing",
+      "title": "List of Muxings",
+      "url": "/encoding/encodings/{encoding_id:uuid}/muxings",
+      "mappings": [
+        {
+          "description": "Link to stream objects",
+          "type": "href",
+          "jsonpath": "$..streamId",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/streams/{value}"
+          }
+        },
+        {
+          "description": "Info of name for stream objects",
+          "type": "related",
+          "title": "name",
+          "jsonpath": "$..streamId",
+          "group": "stream",
+          "variables": [
+            {
+              "name": "type",
+              "type": "xhr",
+              "url": "/encoding/encodings/{encoding_id}/streams/{value}",
+              "jsonpath": "$.data.result.name"
+            }
+          ],
+          "presentation": {
+            "suffix": "{type}"
+          }
+        },
+        {
+          "description": "Info of ignored for stream objects",
+          "type": "related",
+          "title": "ignored",
+          "jsonpath": "$..streamId",
+          "group": "stream",
+          "variables": [
+            {
+              "name": "type",
+              "type": "xhr",
+              "url": "/encoding/encodings/{encoding_id}/streams/{value}",
+              "jsonpath": "$.data.result.ignoredBy",
+              "transformation": "boolean"
+            }
+          ],
+          "presentation": {
+            "suffix": "{type}"
           }
         },
         {
@@ -945,34 +1042,21 @@
           "presentation": {
             "suffix": "{count}"
           }
-        }
-      ]
-    },
-    {
-      "description": "Pages related to a specific muxing",
-      "url": "/encoding/encodings/{encoding_id:uuid}/muxings/{muxing_type:type}/{muxing_id:uuid}",
-      "title": "Details of Muxing ({muxing_type}): {muxing_id}",
-      "mappings": [
-        {
-          "description": "Link to stream objects",
-          "type": "href",
-          "jsonpath": "$..streamId",
-          "target": {
-            "url": "/encoding/encodings/{encoding_id}/streams/{value}"
-          }
         },
         {
-          "description": "Button for Muxing object",
-          "type": "related",
-          "title": "{muxing_id}",
-          "jsonpath": "$",
-          "target": {
-            "url": "/encoding/encodings/{encoding_id}/muxings/{muxing_type}/{muxing_id}"
-          },
-          "group": "muxing"
+          "description": "Border of ignored items",
+          "type": "highlight",
+          "jsonpath": "$.data.result..[?(@.ignoredBy)]",
+          "presentation": {
+            "highlight": "ignored",
+            "highlight-scope": "inner"
+          }
         }
+
       ]
     },
+
+
     {
       "description": "Pages related to fmp4 muxings",
       "url": "/encoding/encodings/{encoding_id:uuid}/muxings/fmp4/{muxing_id:uuid}",
@@ -1307,6 +1391,37 @@
       "description": "Page related to a specific DRM config",
       "title": "Details of DRM ({drm_type})",
       "url": "/encoding/encodings/{encoding_id:uuid}/muxings/{muxing_type:type}/{muxing_id:uuid}/drm/{drm_type:type}"
+    },
+
+    {
+      "description": "Pages related to input-streams",
+      "url": "/encoding/encodings/{encoding_id:uuid}/input-streams/{inputstream_type:type}",
+      "title": "List of Input Streams ({inputstream_type})",
+      "mappings": [
+        {
+          "description": "Link to individual input stream objects in list",
+          "type": "href",
+          "jsonpath": "$.data.result.items[*].id",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/input-streams/{inputstream_type}/{value}"
+          }
+        }
+      ]
+    },
+    {
+      "description": "Pages related to input-streams (trimming type)",
+      "url": "/encoding/encodings/{encoding_id:uuid}/input-streams/{inputstream_type:type}/{inputstream_trimming_type:type}",
+      "title": "List of Input Streams - Trimming ({inputstream_trimming_type})",
+      "mappings": [
+        {
+          "description": "Link to individual input stream objects in list",
+          "type": "href",
+          "jsonpath": "$.data.result.items[*].id",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/input-streams/{inputstream_type}/{inputstream_trimming_type}/{value}"
+          }
+        }
+      ]
     },
 
     {
@@ -1662,7 +1777,7 @@
 
     {
       "description": "Page related to a specific codec configuration",
-      "url": "encoding/configurations/{media_type:type}/{codec_type:type}/{codec_id:uuid}",
+      "url": "/encoding/configurations/{media_type:type}/{codec_type:type}/{codec_id:uuid}",
       "title": "Details of Codec Configuration ({media_type}/{codec_type}): {codec_id}",
       "mappings": [
         {
