@@ -45,6 +45,14 @@
             "highlight": "error"
           }
         },
+        {
+          "description": "Highlight of error in messages",
+          "type": "highlight",
+          "jsonpath": "$..*[?(@.type=='ERROR')].type",
+          "presentation": {
+            "highlight": "error"
+          }
+        },
 
         {
           "description": "Background of items in list",
@@ -145,6 +153,27 @@
           },
           "presentation": {
             "suffix": "{status}"
+          }
+        },
+        {
+          "description": "Encoding input streams",
+          "type": "related",
+          "title": "All",
+          "group": "input streams",
+          "jsonpath": "$",
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/input-streams",
+            "variables": [
+              {
+                "name": "count",
+                "type": "jsonpath",
+                "jsonpath": "$.data.result.totalCount",
+                "transformation": "count"
+              }
+            ]
+          },
+          "presentation": {
+            "suffix": "{count}"
           }
         },
         {
@@ -397,6 +426,42 @@
           },
           "presentation": {
             "suffix": "{count}"
+          }
+        },
+        {
+          "description": "Link to input stream objects",
+          "type": "href",
+          "jsonpath": "$..inputStreamId",
+          "variables": [
+            {
+              "name": "inputstream_type",
+              "type": "xhr",
+              "url": "/encoding/encodings/{encoding_id}/input-streams/{value}/type",
+              "jsonpath": "$.data.result.type",
+              "transformation": "lowerCase"
+            }
+          ],
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/input-streams/{inputstream_type}/{value}"
+          }
+        },
+        {
+          "description": "Info of type for input stream objects",
+          "type": "related",
+          "title": "type",
+          "jsonpath": "$..inputStreamId",
+          "group": "inputstream",
+          "variables": [
+            {
+              "name": "type",
+              "type": "xhr",
+              "url": "/encoding/encodings/{encoding_id}/input-streams/{value}/type",
+              "jsonpath": "$.data.result.type",
+              "transformation": "lowerCase"
+            }
+          ],
+          "presentation": {
+            "suffix": "{type}"
           }
         }
       ]
@@ -1055,8 +1120,6 @@
 
       ]
     },
-
-
     {
       "description": "Pages related to fmp4 muxings",
       "url": "/encoding/encodings/{encoding_id:uuid}/muxings/fmp4/{muxing_id:uuid}",
@@ -1395,6 +1458,48 @@
 
     {
       "description": "Pages related to input-streams",
+      "url": "/encoding/encodings/{encoding_id:uuid}/input-streams",
+      "title": "List of Input Streams",
+      "mappings": [
+        {
+          "description": "Link to individual input stream objects in list",
+          "type": "href",
+          "jsonpath": "$.data.result.items[*].id",
+          "variables": [
+            {
+              "name": "inputstream_type",
+              "type": "sibling",
+              "key": "type",
+              "transformation": "lowerCase"
+            }
+          ],
+          "target": {
+            "url": "/encoding/encodings/{encoding_id}/input-streams/{inputstream_type}/{value}"
+          }
+        },
+        {
+          "description": "Info of type for input stream objects",
+          "type": "related",
+          "title": "type",
+          "jsonpath": "$.data.result.items[*].id",
+          "group": "inputstream",
+          "variables": [
+            {
+              "name": "type",
+              "type": "xhr",
+              "url": "/encoding/encodings/{encoding_id}/input-streams/{value}/type",
+              "jsonpath": "$.data.result.type",
+              "transformation": "lowerCase"
+            }
+          ],
+          "presentation": {
+            "suffix": "{type}"
+          }
+        }
+      ]
+    },
+    {
+      "description": "Pages related to input-streams main types",
       "url": "/encoding/encodings/{encoding_id:uuid}/input-streams/{inputstream_type:type}",
       "title": "List of Input Streams ({inputstream_type})",
       "mappings": [
@@ -1409,9 +1514,9 @@
       ]
     },
     {
-      "description": "Pages related to input-streams (trimming type)",
-      "url": "/encoding/encodings/{encoding_id:uuid}/input-streams/{inputstream_type:type}/{inputstream_trimming_type:type}",
-      "title": "List of Input Streams - Trimming ({inputstream_trimming_type})",
+      "description": "Pages related to input-streams sub-types",
+      "url": "/encoding/encodings/{encoding_id:uuid}/input-streams/{inputstream_type:type}/{inputstream_sub_type:type}",
+      "title": "List of Input Streams ({inputstream_type} / {inputstream_sub_type})",
       "mappings": [
         {
           "description": "Link to individual input stream objects in list",
